@@ -21,12 +21,18 @@ cp -R "$TMP/muscletrack_t2d/android" "$ROOT/android"
 cp "$TMP/muscletrack_t2d/.metadata" "$ROOT/.metadata"
 
 # Keep the Android application ID and launcher Activity package aligned.
-# Kotlin/Java source does not need to live in a folder matching its package declaration.
 while IFS= read -r -d '' file; do
   sed -i 's/au\.com\.muscletrack\.muscletrack_t2d/au.com.muscletrack.t2d/g' "$file"
 done < <(grep -rlZ 'au\.com\.muscletrack\.muscletrack_t2d' "$ROOT/android" || true)
 
+# Target Android 16 / API 36 for Google Play submissions from 31 Aug 2026.
+APP_GRADLE="$ROOT/android/app/build.gradle.kts"
+if [[ -f "$APP_GRADLE" ]]; then
+  sed -i 's/compileSdk = flutter\.compileSdkVersion/compileSdk = 36/' "$APP_GRADLE"
+  sed -i 's/targetSdk = flutter\.targetSdkVersion/targetSdk = 36/' "$APP_GRADLE"
+fi
+
 cd "$ROOT"
 flutter pub get
 
-echo "Android runner created with application ID au.com.muscletrack.t2d"
+echo "Android runner created with application ID au.com.muscletrack.t2d and targetSdk 36"
