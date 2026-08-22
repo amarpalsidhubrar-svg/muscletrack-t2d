@@ -1,5 +1,8 @@
 # MuscleTrack T2D — Google Play listing draft
 
+## Developer / publisher
+Cardiologics
+
 ## App name
 MuscleTrack T2D
 
@@ -35,7 +38,7 @@ Health & Fitness
 Adults (18+)
 
 ## Initial release notes
-First public testing release of MuscleTrack T2D. Includes local monitoring of weight, optional body composition, medication exposure, resistance training, activity, goals and progress trends.
+First public testing release of MuscleTrack T2D by Cardiologics. Includes local monitoring of weight, optional body composition, medication exposure, resistance training, activity, goals and progress trends.
 
 ## Store assets still required
 - 512 x 512 PNG app icon
