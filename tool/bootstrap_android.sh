@@ -20,10 +20,13 @@ rm -rf "$ROOT/android"
 cp -R "$TMP/muscletrack_t2d/android" "$ROOT/android"
 cp "$TMP/muscletrack_t2d/.metadata" "$ROOT/.metadata"
 
-find "$ROOT/android" -type f \( -name '*.gradle' -o -name '*.kts' \) -print0 | \
-  xargs -0 sed -i 's/au\.com\.muscletrack\.muscletrack_t2d/au.com.muscletrack.t2d/g'
+# Keep the Android application ID and launcher Activity package aligned.
+# Kotlin/Java source does not need to live in a folder matching its package declaration.
+while IFS= read -r -d '' file; do
+  sed -i 's/au\.com\.muscletrack\.muscletrack_t2d/au.com.muscletrack.t2d/g' "$file"
+done < <(grep -rlZ 'au\.com\.muscletrack\.muscletrack_t2d' "$ROOT/android" || true)
 
 cd "$ROOT"
 flutter pub get
 
-echo "Android runner created. Next: flutter run"
+echo "Android runner created with application ID au.com.muscletrack.t2d"
