@@ -28,31 +28,317 @@ class _TreadmillAvatarState extends State<TreadmillAvatar>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this,duration: const Duration(milliseconds: 1800))..repeat();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 760),
+    )..repeat();
   }
 
   @override
-  void dispose() { _controller.dispose(); super.dispose(); }
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return RepaintBoundary(
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          final phase = _controller.value * math.pi * 2;
-          return Transform.translate(
-            offset: Offset(0, math.sin(phase) * 1.0),
-            child: Transform.scale(scale: 1 + math.sin(phase) * 0.003, child: child),
-          );
-        },
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: Image.asset('assets/images/treadmill_runner_realistic.jpg',width: widget.width,height: widget.height,fit: BoxFit.cover,alignment: Alignment.center,filterQuality: FilterQuality.high),
+      child: SizedBox(
+        width: widget.width,
+        height: widget.height,
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (_, __) => CustomPaint(
+            painter: _RunnerPainter(_controller.value),
+          ),
         ),
       ),
     );
   }
+}
+
+class _RunnerPainter extends CustomPainter {
+  final double t;
+  _RunnerPainter(this.t);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final phase = t * math.pi * 2;
+    final swing = math.sin(phase);
+    final bounce = math.sin(phase * 2) * h * 0.012;
+
+    const skin = Color(0xFFC98655);
+    const skinShade = Color(0xFFA8643E);
+    const hair = Color(0xFF211915);
+    const shirt = Color(0xFF173E39);
+    const shorts = Color(0xFF152522);
+    const shoe = Color(0xFFF4F5F4);
+    const accent = Color(0xFF0B8C5E);
+    const frame = Color(0xFF384341);
+    const frameDark = Color(0xFF202927);
+
+    // Soft background halo to integrate the runner with the dashboard card.
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(w * .55, h * .52),
+        width: w * .9,
+        height: h * .86,
+      ),
+      Paint()..color = const Color(0x0D0B8C5E),
+    );
+
+    // Floor shadow.
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(w * .57, h * .87),
+        width: w * .74,
+        height: h * .055,
+      ),
+      Paint()..color = const Color(0x16000000),
+    );
+
+    // Treadmill deck.
+    final beltY = h * .79;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(w * .12, beltY - h * .025, w * .72, h * .07),
+        Radius.circular(h * .035),
+      ),
+      Paint()..color = frameDark,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(w * .14, beltY - h * .017, w * .68, h * .026),
+        Radius.circular(h * .014),
+      ),
+      Paint()..color = const Color(0xFF646F6C),
+    );
+
+    // Moving belt marks.
+    for (var i = 0; i < 5; i++) {
+      final p = ((i / 5) + t) % 1;
+      final x = w * (.16 + p * .60);
+      canvas.drawLine(
+        Offset(x, beltY - h * .005),
+        Offset(x + w * .035, beltY - h * .005),
+        Paint()
+          ..color = const Color(0x7AFFFFFF)
+          ..strokeWidth = h * .008
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+
+    // Treadmill upright and console.
+    final framePaint = Paint()
+      ..color = frame
+      ..strokeWidth = h * .032
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(w * .76, beltY),
+      Offset(w * .82, h * .35),
+      framePaint,
+    );
+    canvas.drawLine(
+      Offset(w * .82, h * .35),
+      Offset(w * .94, h * .35),
+      framePaint,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(w * .78, h * .25, w * .18, h * .13),
+        Radius.circular(w * .025),
+      ),
+      Paint()..color = frameDark,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(w * .81, h * .275, w * .12, h * .055),
+        Radius.circular(w * .012),
+      ),
+      Paint()..color = const Color(0xFFA9D3C5),
+    );
+
+    // Runner body landmarks.
+    final head = Offset(w * .42, h * .225 + bounce);
+    final shoulder = Offset(w * .43, h * .355 + bounce);
+    final hip = Offset(w * .46, h * .56 + bounce);
+
+    // Neck.
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: Offset(w * .43, h * .295 + bounce),
+          width: w * .045,
+          height: h * .055,
+        ),
+        Radius.circular(w * .02),
+      ),
+      Paint()..color = skin,
+    );
+
+    // Head and face shading.
+    canvas.drawOval(
+      Rect.fromCenter(center: head, width: w * .12, height: h * .145),
+      Paint()..color = skin,
+    );
+    canvas.drawArc(
+      Rect.fromCenter(center: head, width: w * .12, height: h * .145),
+      -.2,
+      math.pi * .8,
+      true,
+      Paint()..color = skinShade.withOpacity(.12),
+    );
+
+    // Hair.
+    final hairPath = Path()
+      ..moveTo(w * .365, h * .205 + bounce)
+      ..quadraticBezierTo(w * .39, h * .135 + bounce, w * .475, h * .155 + bounce)
+      ..quadraticBezierTo(w * .505, h * .175 + bounce, w * .492, h * .225 + bounce)
+      ..quadraticBezierTo(w * .43, h * .175 + bounce, w * .365, h * .205 + bounce)
+      ..close();
+    canvas.drawPath(hairPath, Paint()..color = hair);
+
+    // Face details.
+    canvas.drawCircle(
+      Offset(w * .468, h * .218 + bounce),
+      w * .005,
+      Paint()..color = const Color(0xFF241A16),
+    );
+    canvas.drawLine(
+      Offset(w * .475, h * .248 + bounce),
+      Offset(w * .492, h * .246 + bounce),
+      Paint()
+        ..color = const Color(0xFF8B4B3D)
+        ..strokeWidth = 1.3
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // Torso with slight forward lean.
+    final torso = Path()
+      ..moveTo(w * .365, h * .345 + bounce)
+      ..quadraticBezierTo(w * .425, h * .315 + bounce, w * .505, h * .35 + bounce)
+      ..lineTo(w * .535, h * .545 + bounce)
+      ..quadraticBezierTo(w * .47, h * .575 + bounce, w * .395, h * .54 + bounce)
+      ..close();
+    canvas.drawPath(torso, Paint()..color = shirt);
+
+    // Shirt highlight gives some depth.
+    canvas.drawLine(
+      Offset(w * .405, h * .36 + bounce),
+      Offset(w * .43, h * .52 + bounce),
+      Paint()
+        ..color = const Color(0x3039B88B)
+        ..strokeWidth = w * .014
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // Shorts.
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(w * .395, h * .51 + bounce, w * .145, h * .11),
+        Radius.circular(w * .025),
+      ),
+      Paint()..color = shorts,
+    );
+
+    // Arms, opposite phase to legs.
+    final arm = swing * w * .07;
+    _limb(
+      canvas,
+      shoulder + Offset(-w * .045, h * .012),
+      Offset(w * .33 - arm, h * .43 + bounce),
+      Offset(w * .39 - arm, h * .50 + bounce),
+      skin,
+      h * .033,
+    );
+    _limb(
+      canvas,
+      shoulder + Offset(w * .045, h * .012),
+      Offset(w * .535 + arm, h * .415 + bounce),
+      Offset(w * .595 + arm, h * .365 + bounce),
+      skin,
+      h * .033,
+    );
+
+    // Running legs with bent knees.
+    final leg = swing * w * .11;
+    final kneeA = Offset(w * .39 - leg, h * .66 + bounce);
+    final footA = Offset(w * .30 - leg * .55, h * .765);
+    final kneeB = Offset(w * .535 + leg, h * .655 + bounce);
+    final footB = Offset(w * .61 + leg * .60, h * .765);
+
+    _limb(
+      canvas,
+      hip + Offset(-w * .035, 0),
+      kneeA,
+      footA,
+      skin,
+      h * .042,
+    );
+    _limb(
+      canvas,
+      hip + Offset(w * .045, 0),
+      kneeB,
+      footB,
+      skin,
+      h * .042,
+    );
+
+    _shoe(canvas, footA, false, shoe, accent, w, h);
+    _shoe(canvas, footB, true, shoe, accent, w, h);
+  }
+
+  void _limb(
+    Canvas canvas,
+    Offset start,
+    Offset joint,
+    Offset end,
+    Color color,
+    double width,
+  ) {
+    final p = Paint()
+      ..color = color
+      ..strokeWidth = width
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawLine(start, joint, p);
+    canvas.drawLine(joint, end, p);
+    canvas.drawCircle(joint, width * .42, Paint()..color = color);
+  }
+
+  void _shoe(
+    Canvas canvas,
+    Offset foot,
+    bool right,
+    Color base,
+    Color accent,
+    double w,
+    double h,
+  ) {
+    final dir = right ? 1.0 : -1.0;
+    final rect = Rect.fromCenter(
+      center: foot + Offset(dir * w * .015, 0),
+      width: w * .10,
+      height: h * .033,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, Radius.circular(h * .017)),
+      Paint()..color = base,
+    );
+    canvas.drawLine(
+      Offset(rect.left + w * .02, rect.bottom - h * .006),
+      Offset(rect.right - w * .02, rect.bottom - h * .006),
+      Paint()
+        ..color = accent
+        ..strokeWidth = h * .006
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _RunnerPainter oldDelegate) => oldDelegate.t != t;
 }
 ''')
 
@@ -102,8 +388,8 @@ m=m.replace(anchor,insert)
 meal.write_text(m)
 
 pub=ROOT/'pubspec.yaml'
-p=pub.read_text().replace('version: 0.2.3+4','version: 0.2.5+6')
-if 'assets/images/treadmill_runner_realistic.jpg' not in p:
-    p=p.replace('flutter:\n  uses-material-design: true\n','flutter:\n  uses-material-design: true\n  assets:\n    - assets/images/treadmill_runner_realistic.jpg\n')
+p=pub.read_text().replace('version: 0.2.3+4','version: 0.2.6+7')
+# The runner is now entirely code-driven; no external image asset is required.
+p=p.replace('  assets:\n    - assets/images/treadmill_runner_realistic.jpg\n','')
 pub.write_text(p)
-print('Prepared v0.2.5 preview sources with bundled runner asset')
+print('Prepared v0.2.6 preview with true vector runner animation')
