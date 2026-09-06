@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../app_store.dart';
 import 'about_screen.dart';
-import 'goals_screen.dart';
 import 'home_screen.dart';
-import 'medications_screen.dart';
+import 'meal_log_screen.dart';
 import 'progress_screen.dart';
+import 'workout_history_screen.dart';
 
 class AppShell extends StatefulWidget {
   final AppStore store;
@@ -22,48 +22,47 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     final pages = [
       HomeScreen(store: widget.store),
+      WorkoutHistoryScreen(store: widget.store),
+      MealLogScreen(store: widget.store),
       ProgressScreen(store: widget.store),
-      MedicationsScreen(store: widget.store),
-      GoalsScreen(store: widget.store),
       AboutScreen(store: widget.store),
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: const Color(0xFF079669),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.fitness_center, color: Colors.white, size: 19),
-            ),
-            const SizedBox(width: 10),
-            const Text('MuscleTrack T2D'),
-          ],
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'About and settings',
-            onPressed: () => setState(() => _index = 4),
-            icon: const Icon(Icons.settings_outlined),
-          ),
-        ],
+      body: SafeArea(
+        bottom: false,
+        child: IndexedStack(index: _index, children: pages),
       ),
-      body: IndexedStack(index: _index, children: pages),
       bottomNavigationBar: NavigationBar(
+        height: 70,
         selectedIndex: _index,
         onDestinationSelected: (value) => setState(() => _index = value),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.insights_outlined), selectedIcon: Icon(Icons.insights), label: 'Progress'),
-          NavigationDestination(icon: Icon(Icons.medication_outlined), selectedIcon: Icon(Icons.medication), label: 'Meds'),
-          NavigationDestination(icon: Icon(Icons.flag_outlined), selectedIcon: Icon(Icons.flag), label: 'Goals'),
-          NavigationDestination(icon: Icon(Icons.more_horiz), selectedIcon: Icon(Icons.more_horiz), label: 'More'),
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.fitness_center_outlined),
+            selectedIcon: Icon(Icons.fitness_center_rounded),
+            label: 'Workouts',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.restaurant_outlined),
+            selectedIcon: Icon(Icons.restaurant_rounded),
+            label: 'Meals',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.bar_chart_outlined),
+            selectedIcon: Icon(Icons.bar_chart_rounded),
+            label: 'Progress',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.more_horiz_rounded),
+            selectedIcon: Icon(Icons.more_horiz_rounded),
+            label: 'More',
+          ),
         ],
       ),
     );
