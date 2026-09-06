@@ -6,7 +6,6 @@ import 'goals_screen.dart';
 import 'home_screen.dart';
 import 'medications_screen.dart';
 import 'progress_screen.dart';
-import 'strength_workout_screen.dart';
 
 class AppShell extends StatefulWidget {
   final AppStore store;
@@ -31,15 +30,27 @@ class _AppShellState extends State<AppShell> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('MuscleTrack T2D'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: const Color(0xFF079669),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.fitness_center, color: Colors.white, size: 19),
+            ),
+            const SizedBox(width: 10),
+            const Text('MuscleTrack T2D'),
+          ],
+        ),
         actions: [
           IconButton(
-            tooltip: 'Log strength workout',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => StrengthWorkoutScreen(store: widget.store)),
-            ),
-            icon: const Icon(Icons.add_circle_outline),
+            tooltip: 'About and settings',
+            onPressed: () => setState(() => _index = 4),
+            icon: const Icon(Icons.settings_outlined),
           ),
         ],
       ),
@@ -52,7 +63,7 @@ class _AppShellState extends State<AppShell> {
           NavigationDestination(icon: Icon(Icons.insights_outlined), selectedIcon: Icon(Icons.insights), label: 'Progress'),
           NavigationDestination(icon: Icon(Icons.medication_outlined), selectedIcon: Icon(Icons.medication), label: 'Meds'),
           NavigationDestination(icon: Icon(Icons.flag_outlined), selectedIcon: Icon(Icons.flag), label: 'Goals'),
-          NavigationDestination(icon: Icon(Icons.info_outline), selectedIcon: Icon(Icons.info), label: 'About'),
+          NavigationDestination(icon: Icon(Icons.more_horiz), selectedIcon: Icon(Icons.more_horiz), label: 'More'),
         ],
       ),
     );
