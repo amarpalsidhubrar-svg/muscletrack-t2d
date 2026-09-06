@@ -38,6 +38,39 @@ double estimatedCalories({
   return ((met * 3.5 * bodyWeightKg) / 200) * minutes;
 }
 
+/// Mifflin-St Jeor resting energy estimate. This is an informational estimate,
+/// not a prescription. For users who select 'Other / prefer not to say', the
+/// midpoint of the male and female constants is used to avoid inferring sex.
+double estimatedRestingEnergy({
+  required double weightKg,
+  required double heightCm,
+  required int age,
+  required String sex,
+}) {
+  if (weightKg <= 0 || heightCm <= 0 || age <= 0) return 0;
+  final base = (10 * weightKg) + (6.25 * heightCm) - (5 * age);
+  if (sex == 'Male') return base + 5;
+  if (sex == 'Female') return base - 161;
+  return base - 78;
+}
+
+double estimatedDailyEnergyRequirement({
+  required double weightKg,
+  required double heightCm,
+  required int age,
+  required String sex,
+  required double activityFactor,
+}) {
+  if (activityFactor <= 0) return 0;
+  return estimatedRestingEnergy(
+        weightKg: weightKg,
+        heightCm: heightCm,
+        age: age,
+        sex: sex,
+      ) *
+      activityFactor;
+}
+
 String shortDate(DateTime date) {
   const months = [
     'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'
