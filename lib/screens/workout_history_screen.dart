@@ -4,14 +4,29 @@ import '../app_store.dart';
 import '../calculations.dart';
 import 'strength_workout_screen.dart';
 
-class WorkoutHistoryScreen extends StatelessWidget {
+class WorkoutHistoryScreen extends StatefulWidget {
   final AppStore store;
 
   const WorkoutHistoryScreen({super.key, required this.store});
 
   @override
+  State<WorkoutHistoryScreen> createState() => _WorkoutHistoryScreenState();
+}
+
+class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
+  Future<void> _editWorkout(BuildContext context, dynamic workout) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => StrengthWorkoutScreen(store: widget.store, existing: workout),
+      ),
+    );
+    if (mounted) setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final workouts = store.workouts.where((w) => w.workoutType == 'Strength').toList();
+    final workouts = widget.store.workouts.where((w) => w.workoutType == 'Strength').toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Workout history')),
@@ -37,12 +52,7 @@ class WorkoutHistoryScreen extends StatelessWidget {
                     trailing: PopupMenuButton<String>(
                       onSelected: (value) async {
                         if (value == 'edit') {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => StrengthWorkoutScreen(store: store, existing: workout),
-                            ),
-                          );
+                          await _editWorkout(context, workout);
                         } else if (value == 'delete' && workout.id != null) {
                           final confirmed = await showDialog<bool>(
                             context: context,
@@ -62,7 +72,8 @@ class WorkoutHistoryScreen extends StatelessWidget {
                             ),
                           );
                           if (confirmed == true) {
-                            await store.deleteWorkout(workout.id!);
+                            await widget.store.deleteWorkout(workout.id!);
+                            if (mounted) setState(() {});
                           }
                         }
                       },
@@ -71,21 +82,19 @@ class WorkoutHistoryScreen extends StatelessWidget {
                         PopupMenuItem(value: 'delete', child: Text('Delete workout')),
                       ],
                     ),
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => StrengthWorkoutScreen(store: store, existing: workout),
-                      ),
-                    ),
+                    onTap: () => _editWorkout(context, workout),
                   ),
                 );
               },
             ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => StrengthWorkoutScreen(store: store)),
-        ),
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => StrengthWorkoutScreen(store: widget.store)),
+          );
+          if (mounted) setState(() {});
+        },
         icon: const Icon(Icons.add),
         label: const Text('Workout'),
       ),
