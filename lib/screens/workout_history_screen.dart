@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../app_store.dart';
 import '../calculations.dart';
-import '../models.dart';
 import 'strength_workout_screen.dart';
 
 class WorkoutHistoryScreen extends StatelessWidget {
