@@ -84,134 +84,218 @@ class _MealLogScreenState extends State<MealLogScreen> {
       sex: profile.sex,
       activityFactor: _activityFactor,
     );
+    final calorieProgress = estimatedDaily <= 0
+        ? 0.0
+        : (widget.store.todayMealCalories / estimatedDaily).clamp(0.0, 1.0);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Meals & nutrition')),
+      appBar: AppBar(title: const Text('Log Meal')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 32),
         children: [
-          Card(
-            color: Theme.of(context).colorScheme.primaryContainer,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Estimated daily energy', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
-                const SizedBox(height: 6),
-                Text('${estimatedDaily.toStringAsFixed(0)} kcal/day', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
-                const SizedBox(height: 10),
-                DropdownButtonFormField<double>(
-                  initialValue: _activityFactor,
-                  decoration: const InputDecoration(labelText: 'Usual activity level'),
-                  items: const [
-                    DropdownMenuItem(value: 1.2, child: Text('Sedentary')),
-                    DropdownMenuItem(value: 1.375, child: Text('Lightly active')),
-                    DropdownMenuItem(value: 1.55, child: Text('Moderately active')),
-                    DropdownMenuItem(value: 1.725, child: Text('Very active')),
-                  ],
-                  onChanged: (v) => setState(() => _activityFactor = v ?? _activityFactor),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Informational estimate based on age, sex, height, current weight and activity level. Individual energy needs vary; this is not a prescribed calorie target.',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ]),
-            ),
+          Text(
+            'Meal type',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Today', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
-                const SizedBox(height: 8),
-                Text('${widget.store.todayMealCalories.toStringAsFixed(0)} kcal logged'),
-                Text('${widget.store.todayProteinG.toStringAsFixed(0)} g protein logged'),
-              ]),
-            ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Other']
+                .map(
+                  (type) => ChoiceChip(
+                    label: Text(type),
+                    selected: _mealType == type,
+                    onSelected: (_) => setState(() => _mealType = type),
+                  ),
+                )
+                .toList(),
           ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            initialValue: _mealType,
-            decoration: const InputDecoration(labelText: 'Meal'),
-            items: const [
-              DropdownMenuItem(value: 'Breakfast', child: Text('Breakfast')),
-              DropdownMenuItem(value: 'Lunch', child: Text('Lunch')),
-              DropdownMenuItem(value: 'Dinner', child: Text('Dinner')),
-              DropdownMenuItem(value: 'Snack', child: Text('Snack')),
-              DropdownMenuItem(value: 'Other', child: Text('Other')),
-            ],
-            onChanged: (v) => setState(() => _mealType = v ?? _mealType),
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 18),
           TextField(
             controller: _description,
-            decoration: const InputDecoration(labelText: 'Meal or food', hintText: 'e.g. tuna sandwich and fruit'),
+            decoration: const InputDecoration(
+              labelText: 'Food / meal description',
+              hintText: 'e.g. Greek yoghurt, berries and oats',
+            ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _calories,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             onTap: () => _selectAll(_calories),
-            decoration: const InputDecoration(labelText: 'Estimated calories (kcal)'),
+            decoration: const InputDecoration(
+              labelText: 'Calories',
+              suffixText: 'kcal',
+            ),
           ),
           const SizedBox(height: 12),
-          Row(children: [
-            Expanded(child: _numberField(_protein, 'Protein (g)')),
-            const SizedBox(width: 10),
-            Expanded(child: _numberField(_carbs, 'Carbs (g)')),
-          ]),
+          Row(
+            children: [
+              Expanded(child: _numberField(_protein, 'Protein', 'g')),
+              const SizedBox(width: 10),
+              Expanded(child: _numberField(_carbs, 'Carbohydrate', 'g')),
+            ],
+          ),
           const SizedBox(height: 10),
-          Row(children: [
-            Expanded(child: _numberField(_fat, 'Fat (g)')),
-            const SizedBox(width: 10),
-            Expanded(child: _numberField(_fibre, 'Fibre (g)')),
-          ]),
+          Row(
+            children: [
+              Expanded(child: _numberField(_fat, 'Fat', 'g')),
+              const SizedBox(width: 10),
+              Expanded(child: _numberField(_fibre, 'Fibre', 'g')),
+            ],
+          ),
           const SizedBox(height: 16),
-          FilledButton.icon(
+          FilledButton(
             onPressed: _save,
-            icon: const Icon(Icons.restaurant),
-            label: const Padding(
+            child: const Padding(
               padding: EdgeInsets.symmetric(vertical: 14),
-              child: Text('Log meal'),
+              child: Text('Save Meal'),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Card(
+            color: const Color(0xFFEAF6F1),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.bolt, color: Theme.of(context).colorScheme.primary),
+                      const SizedBox(width: 7),
+                      Text(
+                        'Estimated daily energy requirement',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w900,
+                            ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '~ ${estimatedDaily.toStringAsFixed(0)} kcal/day',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFF17312A),
+                        ),
+                  ),
+                  const SizedBox(height: 10),
+                  DropdownButtonFormField<double>(
+                    initialValue: _activityFactor,
+                    decoration: const InputDecoration(labelText: 'Usual activity level'),
+                    items: const [
+                      DropdownMenuItem(value: 1.2, child: Text('Sedentary')),
+                      DropdownMenuItem(value: 1.375, child: Text('Lightly active')),
+                      DropdownMenuItem(value: 1.55, child: Text('Moderately active')),
+                      DropdownMenuItem(value: 1.725, child: Text('Very active')),
+                    ],
+                    onChanged: (v) => setState(() => _activityFactor = v ?? _activityFactor),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Based on age, sex, height, current weight and activity level. Estimate only; individual energy requirements vary.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Today's nutrition",
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${widget.store.todayMealCalories.toStringAsFixed(0)} kcal',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                      Text('${widget.store.todayMeals.length} meals'),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: LinearProgressIndicator(
+                      minHeight: 7,
+                      value: calorieProgress,
+                      backgroundColor: const Color(0xFFEAF0ED),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text('${widget.store.todayProteinG.toStringAsFixed(0)} g protein logged'),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 20),
-          Text('Recent meals', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+          Text(
+            'Recent meals',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+          ),
           const SizedBox(height: 8),
           if (widget.store.meals.isEmpty)
-            const Card(child: Padding(padding: EdgeInsets.all(16), child: Text('No meals logged yet.'))),
-          ...widget.store.meals.take(12).map((meal) => Card(
-                child: ListTile(
-                  leading: const CircleAvatar(child: Icon(Icons.restaurant_outlined, size: 18)),
-                  title: Text('${meal.mealType}: ${meal.description}'),
-                  subtitle: Text(
-                    '${shortDate(meal.date)} • ${meal.calories.toStringAsFixed(0)} kcal'
-                    '${meal.proteinG == null ? '' : ' • ${meal.proteinG!.toStringAsFixed(0)} g protein'}',
-                  ),
-                  trailing: meal.id == null
-                      ? null
-                      : IconButton(
-                          tooltip: 'Delete meal',
-                          icon: const Icon(Icons.delete_outline),
-                          onPressed: () async {
-                            await widget.store.deleteMeal(meal.id!);
-                            if (mounted) setState(() {});
-                          },
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Text('No meals logged yet.'),
+              ),
+            ),
+          ...widget.store.meals.take(12).map(
+                (meal) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Card(
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: const Color(0xFFE6F5EF),
+                        child: Icon(
+                          Icons.restaurant_outlined,
+                          size: 18,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
+                      ),
+                      title: Text('${meal.mealType}: ${meal.description}'),
+                      subtitle: Text(
+                        '${shortDate(meal.date)} • ${meal.calories.toStringAsFixed(0)} kcal'
+                        '${meal.proteinG == null ? '' : ' • ${meal.proteinG!.toStringAsFixed(0)} g protein'}',
+                      ),
+                      trailing: meal.id == null
+                          ? null
+                          : IconButton(
+                              tooltip: 'Delete meal',
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: () async {
+                                await widget.store.deleteMeal(meal.id!);
+                                if (mounted) setState(() {});
+                              },
+                            ),
+                    ),
+                  ),
                 ),
-              )),
+              ),
         ],
       ),
     );
   }
 
-  Widget _numberField(TextEditingController controller, String label) {
+  Widget _numberField(TextEditingController controller, String label, String suffix) {
     return TextField(
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       onTap: () => _selectAll(controller),
-      decoration: InputDecoration(labelText: label, hintText: 'Optional'),
+      decoration: InputDecoration(labelText: label, hintText: 'Optional', suffixText: suffix),
     );
   }
 }
