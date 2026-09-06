@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app_store.dart';
 import '../calculations.dart';
+import '../models.dart';
 import 'strength_workout_screen.dart';
 
 class WorkoutHistoryScreen extends StatefulWidget {
@@ -14,7 +15,7 @@ class WorkoutHistoryScreen extends StatefulWidget {
 }
 
 class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
-  Future<void> _editWorkout(BuildContext context, dynamic workout) async {
+  Future<void> _editWorkout(BuildContext context, WorkoutSession workout) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
