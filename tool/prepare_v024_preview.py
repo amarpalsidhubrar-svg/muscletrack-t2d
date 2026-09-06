@@ -102,6 +102,8 @@ m=m.replace(anchor,insert)
 meal.write_text(m)
 
 pub=ROOT/'pubspec.yaml'
-p=pub.read_text().replace('version: 0.2.3+4','version: 0.2.4+5')
+p=pub.read_text().replace('version: 0.2.3+4','version: 0.2.5+6')
+if 'assets/images/treadmill_runner_realistic.jpg' not in p:
+    p=p.replace('flutter:\n  uses-material-design: true\n','flutter:\n  uses-material-design: true\n  assets:\n    - assets/images/treadmill_runner_realistic.jpg\n')
 pub.write_text(p)
-print('Prepared v0.2.4 preview sources')
+print('Prepared v0.2.5 preview sources with bundled runner asset')
