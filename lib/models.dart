@@ -143,6 +143,13 @@ class WorkoutSession {
   final double? met;
   final String source;
   final double? deviceCalories;
+  final int? fatigue;
+  final int? sleepQuality;
+  final int? muscleSoreness;
+  final int? discomfort;
+  final int? readiness;
+  final double? sleepHours;
+  final int? sessionRpe;
   final List<ExerciseSetRecord> sets;
 
   const WorkoutSession({
@@ -153,6 +160,13 @@ class WorkoutSession {
     this.met,
     this.source = 'Manual entry',
     this.deviceCalories,
+    this.fatigue,
+    this.sleepQuality,
+    this.muscleSoreness,
+    this.discomfort,
+    this.readiness,
+    this.sleepHours,
+    this.sessionRpe,
     this.sets = const [],
   });
 
@@ -164,7 +178,62 @@ class WorkoutSession {
         'met': met,
         'source': source,
         'device_calories': deviceCalories,
+        'fatigue': fatigue,
+        'sleep_quality': sleepQuality,
+        'muscle_soreness': muscleSoreness,
+        'discomfort': discomfort,
+        'readiness': readiness,
+        'sleep_hours': sleepHours,
+        'session_rpe': sessionRpe,
       };
+}
+
+class MealEntry {
+  final int? id;
+  final DateTime date;
+  final String mealType;
+  final String description;
+  final double calories;
+  final double? proteinG;
+  final double? carbsG;
+  final double? fatG;
+  final double? fibreG;
+
+  const MealEntry({
+    this.id,
+    required this.date,
+    required this.mealType,
+    required this.description,
+    required this.calories,
+    this.proteinG,
+    this.carbsG,
+    this.fatG,
+    this.fibreG,
+  });
+
+  Map<String, Object?> toMap() => {
+        if (id != null) 'id': id,
+        'date': date.toIso8601String(),
+        'meal_type': mealType,
+        'description': description,
+        'calories': calories,
+        'protein_g': proteinG,
+        'carbs_g': carbsG,
+        'fat_g': fatG,
+        'fibre_g': fibreG,
+      };
+
+  factory MealEntry.fromMap(Map<String, Object?> map) => MealEntry(
+        id: map['id'] as int?,
+        date: DateTime.parse(map['date'] as String),
+        mealType: map['meal_type'] as String,
+        description: map['description'] as String,
+        calories: (map['calories'] as num).toDouble(),
+        proteinG: (map['protein_g'] as num?)?.toDouble(),
+        carbsG: (map['carbs_g'] as num?)?.toDouble(),
+        fatG: (map['fat_g'] as num?)?.toDouble(),
+        fibreG: (map['fibre_g'] as num?)?.toDouble(),
+      );
 }
 
 class Goals {
