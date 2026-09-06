@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../app_store.dart';
 import '../calculations.dart';
 import '../widgets/common.dart';
+import '../widgets/treadmill_avatar.dart';
 import 'log_activity_screen.dart';
 import 'log_weight_screen.dart';
 import 'meal_log_screen.dart';
@@ -18,6 +19,13 @@ class HomeScreen extends StatelessWidget {
   bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
+  String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
   @override
   Widget build(BuildContext context) {
     final profile = store.profile!;
@@ -25,7 +33,8 @@ class HomeScreen extends StatelessWidget {
     final activityGoal = math.max(store.goals.weeklyActivityMin, 1);
     final strengthGoal = math.max(store.goals.weeklyStrengthSessions, 1);
     final today = DateTime.now();
-    final todayWorkouts = store.workouts.where((w) => _sameDay(w.date, today)).length;
+    final todayWorkouts =
+        store.workouts.where((w) => _sameDay(w.date, today)).length;
     final estimatedDailyEnergy = estimatedDailyEnergyRequirement(
       weightKg: store.currentWeightKg,
       heightCm: profile.heightCm,
@@ -40,43 +49,48 @@ class HomeScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Hello, ${profile.name}',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          color: const Color(0xFF17312A),
-                        ),
+        Card(
+          margin: EdgeInsets.zero,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 10, 14),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${_greeting()}, ${profile.name}',
+                        style:
+                            Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  color: const Color(0xFF17312A),
+                                ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        'Keep going — small consistent steps build strength.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: const Color(0xFF52665E),
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        '${today.day}/${today.month}/${today.year}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Today • ${today.day}/${today.month}/${today.year}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 8),
+                const TreadmillAvatar(size: 96),
+              ],
             ),
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE7F5EF),
-                borderRadius: BorderRadius.circular(13),
-              ),
-              child: Icon(
-                Icons.fitness_center,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-          ],
+          ),
         ),
         const SizedBox(height: 16),
         Card(
@@ -109,7 +123,8 @@ class HomeScreen extends StatelessWidget {
                   icon: Icons.local_fire_department_outlined,
                   label: 'Calories',
                   value: '${store.todayMealCalories.toStringAsFixed(0)} kcal',
-                  detail: 'Estimated daily energy ~${estimatedDailyEnergy.toStringAsFixed(0)} kcal',
+                  detail:
+                      'Estimated daily energy ~${estimatedDailyEnergy.toStringAsFixed(0)} kcal',
                   progress: calorieProgress,
                 ),
                 const SizedBox(height: 12),
@@ -136,7 +151,9 @@ class HomeScreen extends StatelessWidget {
               label: 'Log workout',
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => StrengthWorkoutScreen(store: store)),
+                MaterialPageRoute(
+                  builder: (_) => StrengthWorkoutScreen(store: store),
+                ),
               ),
             ),
             _QuickAction(
@@ -144,7 +161,9 @@ class HomeScreen extends StatelessWidget {
               label: 'Log meal',
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => MealLogScreen(store: store)),
+                MaterialPageRoute(
+                  builder: (_) => MealLogScreen(store: store),
+                ),
               ),
             ),
             _QuickAction(
@@ -152,7 +171,9 @@ class HomeScreen extends StatelessWidget {
               label: 'Log weight',
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => LogWeightScreen(store: store)),
+                MaterialPageRoute(
+                  builder: (_) => LogWeightScreen(store: store),
+                ),
               ),
             ),
             _QuickAction(
@@ -160,7 +181,9 @@ class HomeScreen extends StatelessWidget {
               label: 'Workout history',
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => WorkoutHistoryScreen(store: store)),
+                MaterialPageRoute(
+                  builder: (_) => WorkoutHistoryScreen(store: store),
+                ),
               ),
             ),
           ],
@@ -172,7 +195,8 @@ class HomeScreen extends StatelessWidget {
               child: MetricCard(
                 label: 'Current weight',
                 value: '${store.currentWeightKg.toStringAsFixed(1)} kg',
-                subtitle: '${store.weightChangePct.toStringAsFixed(1)}% from baseline',
+                subtitle:
+                    '${store.weightChangePct.toStringAsFixed(1)}% from baseline',
                 icon: Icons.monitor_weight_outlined,
               ),
             ),
@@ -183,7 +207,8 @@ class HomeScreen extends StatelessWidget {
                 value: latestStrength == null
                     ? '—'
                     : '${latestStrength.e1rmKg.toStringAsFixed(0)} kg',
-                subtitle: latestStrength?.exerciseName ?? 'No strength data yet',
+                subtitle:
+                    latestStrength?.exerciseName ?? 'No strength data yet',
                 icon: Icons.fitness_center,
               ),
             ),
@@ -219,7 +244,8 @@ class HomeScreen extends StatelessWidget {
                     Expanded(
                       child: _MiniStat(
                         label: 'Exercise energy',
-                        value: '${store.weeklyCalories.toStringAsFixed(0)} kcal',
+                        value:
+                            '${store.weeklyCalories.toStringAsFixed(0)} kcal',
                       ),
                     ),
                   ],
@@ -231,13 +257,16 @@ class HomeScreen extends StatelessWidget {
         const SectionHeader('More logging'),
         Card(
           child: ListTile(
-            leading: _IconTile(icon: Icons.directions_run),
+            leading: const _IconTile(icon: Icons.directions_run),
             title: const Text('Log physical activity'),
-            subtitle: const Text('Track duration, MET-minutes and energy'),
+            subtitle:
+                const Text('Track duration, MET-minutes and energy'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => LogActivityScreen(store: store)),
+              MaterialPageRoute(
+                builder: (_) => LogActivityScreen(store: store),
+              ),
             ),
           ),
         ),
@@ -252,13 +281,15 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       Text(
                         store.medications.first.medicationName,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ),
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '${store.medications.first.medicationClass} • ${store.medications.first.dose}',
+                        '${store.medications.first.medicationClass} • '
+                        '${store.medications.first.dose}',
                       ),
                       const SizedBox(height: 3),
                       Text(
@@ -352,7 +383,11 @@ class _QuickAction extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const _QuickAction({required this.icon, required this.label, required this.onTap});
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -365,7 +400,11 @@ class _QuickAction extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: Theme.of(context).colorScheme.primary, size: 24),
+              Icon(
+                icon,
+                color: Theme.of(context).colorScheme.primary,
+                size: 24,
+              ),
               const SizedBox(height: 7),
               Text(
                 label,
@@ -393,7 +432,11 @@ class _IconTile extends StatelessWidget {
         color: const Color(0xFFE6F5EF),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Icon(icon, size: 19, color: Theme.of(context).colorScheme.primary),
+      child: Icon(
+        icon,
+        size: 19,
+        color: Theme.of(context).colorScheme.primary,
+      ),
     );
   }
 }
@@ -402,7 +445,11 @@ class _ProgressRow extends StatelessWidget {
   final String label;
   final String value;
   final double progress;
-  const _ProgressRow({required this.label, required this.value, required this.progress});
+  const _ProgressRow({
+    required this.label,
+    required this.value,
+    required this.progress,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -410,7 +457,12 @@ class _ProgressRow extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700))),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
             Text(value),
           ],
         ),

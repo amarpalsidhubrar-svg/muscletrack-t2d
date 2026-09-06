@@ -7,6 +7,8 @@ import '../calculations.dart';
 import '../models.dart';
 import '../widgets/common.dart';
 import 'log_weight_screen.dart';
+import 'strength_workout_screen.dart';
+import 'workout_history_screen.dart';
 
 class ProgressScreen extends StatelessWidget {
   final AppStore store;
@@ -14,19 +16,37 @@ class ProgressScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sorted = [...store.weights]..sort((a, b) => a.date.compareTo(b.date));
-    final latestLean = store.weights.where((e) => e.leanMassKg != null).toList();
-    final latestFat = store.weights.where((e) => e.bodyFatPct != null).toList();
+    final sorted = [...store.weights]
+      ..sort((a, b) => a.date.compareTo(b.date));
+    final latestLean =
+        store.weights.where((e) => e.leanMassKg != null).toList();
+    final latestFat =
+        store.weights.where((e) => e.bodyFatPct != null).toList();
+    final recentStrength = store.workouts
+        .where((w) => w.workoutType == 'Strength')
+        .take(5)
+        .toList();
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
       children: [
         Row(
           children: [
             Expanded(
-              child: Text('Progress', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
+              child: Text(
+                'Progress',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+              ),
             ),
             FilledButton.tonalIcon(
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LogWeightScreen(store: store))),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => LogWeightScreen(store: store),
+                ),
+              ),
               icon: const Icon(Icons.add),
               label: const Text('Weight'),
             ),
@@ -36,33 +56,141 @@ class ProgressScreen extends StatelessWidget {
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Weight trend', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
-              const SizedBox(height: 16),
-              SizedBox(height: 180, child: WeightChart(entries: sorted)),
-              const SizedBox(height: 8),
-              Text('${store.currentWeightKg.toStringAsFixed(1)} kg • ${store.weightChangePct.toStringAsFixed(1)}% from baseline', style: Theme.of(context).textTheme.bodySmall),
-            ]),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Weight trend',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(height: 180, child: WeightChart(entries: sorted)),
+                const SizedBox(height: 8),
+                Text(
+                  '${store.currentWeightKg.toStringAsFixed(1)} kg • '
+                  '${store.weightChangePct.toStringAsFixed(1)}% from baseline',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
           ),
         ),
         const SectionHeader('Body composition'),
-        Row(children: [
-          Expanded(child: MetricCard(label: 'Lean mass', value: latestLean.isEmpty ? '—' : '${latestLean.first.leanMassKg!.toStringAsFixed(1)} kg', subtitle: latestLean.isEmpty ? 'Optional entry' : 'Latest entered', icon: Icons.accessibility_new)),
-          const SizedBox(width: 10),
-          Expanded(child: MetricCard(label: 'Body fat', value: latestFat.isEmpty ? '—' : '${latestFat.first.bodyFatPct!.toStringAsFixed(1)}%', subtitle: latestFat.isEmpty ? 'Optional entry' : 'Latest entered', icon: Icons.pie_chart_outline)),
-        ]),
-        const SectionHeader('Strength bests'),
-        ..._strengthBests(store).map((best) => Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            leading: const CircleAvatar(child: Icon(Icons.fitness_center, size: 18)),
-            title: Text(best.exerciseName),
-            subtitle: Text('Best recorded ${shortDate(best.date)}'),
-            trailing: Text('${best.e1rmKg.toStringAsFixed(0)} kg e1RM', style: const TextStyle(fontWeight: FontWeight.w800)),
+        Row(
+          children: [
+            Expanded(
+              child: MetricCard(
+                label: 'Lean mass',
+                value: latestLean.isEmpty
+                    ? '—'
+                    : '${latestLean.first.leanMassKg!.toStringAsFixed(1)} kg',
+                subtitle:
+                    latestLean.isEmpty ? 'Optional entry' : 'Latest entered',
+                icon: Icons.accessibility_new,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: MetricCard(
+                label: 'Body fat',
+                value: latestFat.isEmpty
+                    ? '—'
+                    : '${latestFat.first.bodyFatPct!.toStringAsFixed(1)}%',
+                subtitle:
+                    latestFat.isEmpty ? 'Optional entry' : 'Latest entered',
+                icon: Icons.pie_chart_outline,
+              ),
+            ),
+          ],
+        ),
+        const SectionHeader('Recent workouts'),
+        if (recentStrength.isEmpty)
+          const Card(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('No strength workouts logged yet.'),
+            ),
+          )
+        else
+          ...recentStrength.map(
+            (workout) {
+              final volume = trainingVolume(workout.sets);
+              final exerciseCount =
+                  workout.sets.map((s) => s.exerciseName).toSet().length;
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: const Color(0xFFE6F5EF),
+                    child: Icon(
+                      Icons.fitness_center,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 18,
+                    ),
+                  ),
+                  title: Text(shortDate(workout.date)),
+                  subtitle: Text(
+                    '$exerciseCount exercise${exerciseCount == 1 ? '' : 's'} • '
+                    '${workout.durationMin} min • ${volume.toStringAsFixed(0)} kg'
+                    '${workout.sessionRpe == null ? '' : ' • RPE ${workout.sessionRpe}'}'
+                    '${workout.notes.trim().isEmpty ? '' : '\n${workout.notes.trim()}'}',
+                    maxLines: workout.notes.trim().isEmpty ? 2 : 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: const Icon(Icons.edit_outlined),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => StrengthWorkoutScreen(
+                        store: store,
+                        existing: workout,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
-        )),
+        if (recentStrength.isNotEmpty)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => WorkoutHistoryScreen(store: store),
+                ),
+              ),
+              icon: const Icon(Icons.history),
+              label: const Text('View all workouts'),
+            ),
+          ),
+        const SectionHeader('Strength bests'),
+        ..._strengthBests(store).map(
+          (best) => Card(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: ListTile(
+              leading: const CircleAvatar(
+                child: Icon(Icons.fitness_center, size: 18),
+              ),
+              title: Text(best.exerciseName),
+              subtitle: Text('Best recorded ${shortDate(best.date)}'),
+              trailing: Text(
+                '${best.e1rmKg.toStringAsFixed(0)} kg e1RM',
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ),
+        ),
         if (_strengthBests(store).isEmpty)
-          const Card(child: Padding(padding: EdgeInsets.all(16), child: Text('No strength data yet.'))),
+          const Card(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('No strength data yet.'),
+            ),
+          ),
         const SizedBox(height: 14),
         const MonitoringNotice(),
       ],
@@ -84,7 +212,8 @@ class ProgressScreen extends StatelessWidget {
         }
       }
     }
-    final list = map.values.toList()..sort((a, b) => b.e1rmKg.compareTo(a.e1rmKg));
+    final list = map.values.toList()
+      ..sort((a, b) => b.e1rmKg.compareTo(a.e1rmKg));
     return list.take(6).toList();
   }
 }
@@ -96,10 +225,19 @@ class WeightChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (entries.length < 2) {
-      return Center(child: Text(entries.isEmpty ? 'No weight data yet' : 'Add another weight entry to see a trend'));
+      return Center(
+        child: Text(
+          entries.isEmpty
+              ? 'No weight data yet'
+              : 'Add another weight entry to see a trend',
+        ),
+      );
     }
     return CustomPaint(
-      painter: _WeightChartPainter(entries, Theme.of(context).colorScheme.primary),
+      painter: _WeightChartPainter(
+        entries,
+        Theme.of(context).colorScheme.primary,
+      ),
       child: const SizedBox.expand(),
     );
   }
@@ -115,21 +253,41 @@ class _WeightChartPainter extends CustomPainter {
     final values = entries.map((e) => e.weightKg).toList();
     var minV = values.reduce(math.min);
     var maxV = values.reduce(math.max);
-    if ((maxV - minV).abs() < 0.1) { minV -= 1; maxV += 1; }
-    final grid = Paint()..color = Colors.black12..strokeWidth = 1;
+    if ((maxV - minV).abs() < 0.1) {
+      minV -= 1;
+      maxV += 1;
+    }
+    final grid = Paint()
+      ..color = Colors.black12
+      ..strokeWidth = 1;
     for (var i = 1; i < 4; i++) {
       final y = size.height * i / 4;
       canvas.drawLine(Offset(0, y), Offset(size.width, y), grid);
     }
     final path = Path();
     for (var i = 0; i < values.length; i++) {
-      final x = values.length == 1 ? 0.0 : size.width * i / (values.length - 1);
-      final y = size.height - ((values[i] - minV) / (maxV - minV) * size.height);
-      if (i == 0) { path.moveTo(x, y); } else { path.lineTo(x, y); }
+      final x =
+          values.length == 1 ? 0.0 : size.width * i / (values.length - 1);
+      final y = size.height -
+          ((values[i] - minV) / (maxV - minV) * size.height);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
     }
-    canvas.drawPath(path, Paint()..color = color..strokeWidth = 3..style = PaintingStyle.stroke..strokeCap = StrokeCap.round..strokeJoin = StrokeJoin.round);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color
+        ..strokeWidth = 3
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
   }
 
   @override
-  bool shouldRepaint(covariant _WeightChartPainter oldDelegate) => oldDelegate.entries != entries || oldDelegate.color != color;
+  bool shouldRepaint(covariant _WeightChartPainter oldDelegate) =>
+      oldDelegate.entries != entries || oldDelegate.color != color;
 }

@@ -11,7 +11,7 @@ class AppDatabase {
     final dbPath = join(await getDatabasesPath(), 'muscletrack_v01.db');
     _database = await openDatabase(
       dbPath,
-      version: 2,
+      version: 3,
       onConfigure: (db) async => db.execute('PRAGMA foreign_keys = ON'),
       onCreate: (db, version) async {
         await db.execute('''
@@ -58,7 +58,8 @@ class AppDatabase {
             discomfort INTEGER,
             readiness INTEGER,
             sleep_hours REAL,
-            session_rpe INTEGER
+            session_rpe INTEGER,
+            notes TEXT NOT NULL DEFAULT ''
           )
         ''');
         await db.execute('''
@@ -118,6 +119,11 @@ class AppDatabase {
               fibre_g REAL
             )
           ''');
+        }
+        if (oldVersion < 3) {
+          await db.execute(
+            "ALTER TABLE workouts ADD COLUMN notes TEXT NOT NULL DEFAULT ''",
+          );
         }
       },
     );
@@ -227,6 +233,7 @@ class AppDatabase {
           readiness: (row['readiness'] as num?)?.toInt(),
           sleepHours: (row['sleep_hours'] as num?)?.toDouble(),
           sessionRpe: (row['session_rpe'] as num?)?.toInt(),
+          notes: (row['notes'] as String?) ?? '',
           sets: setRows.map(ExerciseSetRecord.fromMap).toList(),
         ),
       );

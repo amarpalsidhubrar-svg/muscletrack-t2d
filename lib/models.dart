@@ -150,6 +150,7 @@ class WorkoutSession {
   final int? readiness;
   final double? sleepHours;
   final int? sessionRpe;
+  final String notes;
   final List<ExerciseSetRecord> sets;
 
   const WorkoutSession({
@@ -167,6 +168,7 @@ class WorkoutSession {
     this.readiness,
     this.sleepHours,
     this.sessionRpe,
+    this.notes = '',
     this.sets = const [],
   });
 
@@ -185,6 +187,7 @@ class WorkoutSession {
         'readiness': readiness,
         'sleep_hours': sleepHours,
         'session_rpe': sessionRpe,
+        'notes': notes,
       };
 }
 
