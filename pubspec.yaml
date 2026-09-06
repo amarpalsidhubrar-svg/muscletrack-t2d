@@ -1,7 +1,7 @@
 name: muscletrack_t2d
 description: Muscle-first monitoring app for adults with type 2 diabetes.
 publish_to: 'none'
-version: 0.1.0+1
+version: 0.2.0+2
 
 environment:
   sdk: '>=3.12.0 <4.0.0'
