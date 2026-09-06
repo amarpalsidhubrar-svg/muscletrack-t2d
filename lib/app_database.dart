@@ -11,7 +11,7 @@ class AppDatabase {
     final dbPath = join(await getDatabasesPath(), 'muscletrack_v01.db');
     _database = await openDatabase(
       dbPath,
-      version: 1,
+      version: 3,
       onConfigure: (db) async => db.execute('PRAGMA foreign_keys = ON'),
       onCreate: (db, version) async {
         await db.execute('''
@@ -51,7 +51,15 @@ class AppDatabase {
             duration_min INTEGER NOT NULL,
             met REAL,
             source TEXT NOT NULL,
-            device_calories REAL
+            device_calories REAL,
+            fatigue INTEGER,
+            sleep_quality INTEGER,
+            muscle_soreness INTEGER,
+            discomfort INTEGER,
+            readiness INTEGER,
+            sleep_hours REAL,
+            session_rpe INTEGER,
+            notes TEXT NOT NULL DEFAULT ''
           )
         ''');
         await db.execute('''
@@ -66,6 +74,19 @@ class AppDatabase {
           )
         ''');
         await db.execute('''
+          CREATE TABLE meals(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            meal_type TEXT NOT NULL,
+            description TEXT NOT NULL,
+            calories REAL NOT NULL,
+            protein_g REAL,
+            carbs_g REAL,
+            fat_g REAL,
+            fibre_g REAL
+          )
+        ''');
+        await db.execute('''
           CREATE TABLE goals(
             id INTEGER PRIMARY KEY,
             target_weight_kg REAL,
@@ -75,6 +96,35 @@ class AppDatabase {
             target_e1rm_kg REAL
           )
         ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('ALTER TABLE workouts ADD COLUMN fatigue INTEGER');
+          await db.execute('ALTER TABLE workouts ADD COLUMN sleep_quality INTEGER');
+          await db.execute('ALTER TABLE workouts ADD COLUMN muscle_soreness INTEGER');
+          await db.execute('ALTER TABLE workouts ADD COLUMN discomfort INTEGER');
+          await db.execute('ALTER TABLE workouts ADD COLUMN readiness INTEGER');
+          await db.execute('ALTER TABLE workouts ADD COLUMN sleep_hours REAL');
+          await db.execute('ALTER TABLE workouts ADD COLUMN session_rpe INTEGER');
+          await db.execute('''
+            CREATE TABLE meals(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              date TEXT NOT NULL,
+              meal_type TEXT NOT NULL,
+              description TEXT NOT NULL,
+              calories REAL NOT NULL,
+              protein_g REAL,
+              carbs_g REAL,
+              fat_g REAL,
+              fibre_g REAL
+            )
+          ''');
+        }
+        if (oldVersion < 3) {
+          await db.execute(
+            "ALTER TABLE workouts ADD COLUMN notes TEXT NOT NULL DEFAULT ''",
+          );
+        }
       },
     );
     return _database!;
@@ -128,6 +178,33 @@ class AppDatabase {
     });
   }
 
+  Future<void> updateWorkout(WorkoutSession session) async {
+    if (session.id == null) return;
+    final db = await database;
+    await db.transaction((txn) async {
+      final values = session.toMap()..remove('id');
+      await txn.update(
+        'workouts',
+        values,
+        where: 'id = ?',
+        whereArgs: [session.id],
+      );
+      await txn.delete(
+        'exercise_sets',
+        where: 'workout_id = ?',
+        whereArgs: [session.id],
+      );
+      for (final set in session.sets) {
+        await txn.insert('exercise_sets', set.toMap(session.id!));
+      }
+    });
+  }
+
+  Future<void> deleteWorkout(int workoutId) async {
+    final db = await database;
+    await db.delete('workouts', where: 'id = ?', whereArgs: [workoutId]);
+  }
+
   Future<List<WorkoutSession>> loadWorkouts() async {
     final db = await database;
     final workoutRows = await db.query('workouts', orderBy: 'date DESC');
@@ -149,11 +226,35 @@ class AppDatabase {
           met: (row['met'] as num?)?.toDouble(),
           source: row['source'] as String,
           deviceCalories: (row['device_calories'] as num?)?.toDouble(),
+          fatigue: (row['fatigue'] as num?)?.toInt(),
+          sleepQuality: (row['sleep_quality'] as num?)?.toInt(),
+          muscleSoreness: (row['muscle_soreness'] as num?)?.toInt(),
+          discomfort: (row['discomfort'] as num?)?.toInt(),
+          readiness: (row['readiness'] as num?)?.toInt(),
+          sleepHours: (row['sleep_hours'] as num?)?.toDouble(),
+          sessionRpe: (row['session_rpe'] as num?)?.toInt(),
+          notes: (row['notes'] as String?) ?? '',
           sets: setRows.map(ExerciseSetRecord.fromMap).toList(),
         ),
       );
     }
     return result;
+  }
+
+  Future<int> addMeal(MealEntry entry) async {
+    final db = await database;
+    return db.insert('meals', entry.toMap());
+  }
+
+  Future<void> deleteMeal(int mealId) async {
+    final db = await database;
+    await db.delete('meals', where: 'id = ?', whereArgs: [mealId]);
+  }
+
+  Future<List<MealEntry>> loadMeals() async {
+    final db = await database;
+    final rows = await db.query('meals', orderBy: 'date DESC');
+    return rows.map(MealEntry.fromMap).toList();
   }
 
   Future<void> saveGoals(Goals goals) async {
@@ -176,6 +277,7 @@ class AppDatabase {
     await db.transaction((txn) async {
       await txn.delete('exercise_sets');
       await txn.delete('workouts');
+      await txn.delete('meals');
       await txn.delete('medications');
       await txn.delete('weight_entries');
       await txn.delete('goals');

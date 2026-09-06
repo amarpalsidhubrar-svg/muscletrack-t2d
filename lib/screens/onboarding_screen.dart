@@ -71,7 +71,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Track weight, muscle-related measures, activity, strength and medication exposure in one place.',
+              'Track weight, muscle-related measures, activity, strength, recovery, nutrition and medication exposure in one place.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
@@ -180,7 +180,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             const SizedBox(height: 10),
             Text(
-              'Version 0.1 stores data on this device only. No account or cloud sync is used.',
+              'Version 0.2 stores data on this device only. No account or cloud sync is used.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),

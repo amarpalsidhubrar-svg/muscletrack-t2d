@@ -1,0 +1,56 @@
+name: MuscleTrack v0.2 preview APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ feature/v0.2-muscle-health ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Build AFCD Release 3 reference data
+        run: |
+          python -m pip install --quiet openpyxl
+          python tool/build_afcd_data.py
+
+      - name: Prepare v0.2.4 preview sources
+        run: python tool/prepare_v024_preview.py
+
+      - name: Apply Option 2 activity pulse
+        run: python tool/apply_activity_pulse.py
+
+      - name: Apply dashboard interactions
+        run: python tool/apply_dashboard_interactions.py
+
+      - name: Create Android runner
+        run: |
+          chmod +x tool/bootstrap_android.sh
+          ./tool/bootstrap_android.sh
+
+      - name: Configure preview app
+        run: |
+          chmod +x tool/configure_preview_android.sh
+          ./tool/configure_preview_android.sh
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Test
+        run: flutter test
+
+      - name: Build preview APK
+        run: flutter build apk --debug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: muscletrack-v028-interactive-dashboard-preview-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 30

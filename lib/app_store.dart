@@ -14,6 +14,7 @@ class AppStore extends ChangeNotifier {
   List<WeightEntry> weights = [];
   List<MedicationEntry> medications = [];
   List<WorkoutSession> workouts = [];
+  List<MealEntry> meals = [];
   Goals goals = const Goals();
 
   Future<void> load() async {
@@ -23,6 +24,7 @@ class AppStore extends ChangeNotifier {
     weights = await db.loadWeights();
     medications = await db.loadMedications();
     workouts = await db.loadWorkouts();
+    meals = await db.loadMeals();
     goals = await db.loadGoals();
     loading = false;
     notifyListeners();
@@ -54,6 +56,26 @@ class AppStore extends ChangeNotifier {
     await refresh();
   }
 
+  Future<void> updateWorkout(WorkoutSession value) async {
+    await db.updateWorkout(value);
+    await refresh();
+  }
+
+  Future<void> deleteWorkout(int workoutId) async {
+    await db.deleteWorkout(workoutId);
+    await refresh();
+  }
+
+  Future<void> addMeal(MealEntry value) async {
+    await db.addMeal(value);
+    await refresh();
+  }
+
+  Future<void> deleteMeal(int mealId) async {
+    await db.deleteMeal(mealId);
+    await refresh();
+  }
+
   Future<void> saveGoals(Goals value) async {
     goals = value;
     await db.saveGoals(value);
@@ -64,6 +86,7 @@ class AppStore extends ChangeNotifier {
     weights = await db.loadWeights();
     medications = await db.loadMedications();
     workouts = await db.loadWorkouts();
+    meals = await db.loadMeals();
     goals = await db.loadGoals();
     notifyListeners();
   }
@@ -112,6 +135,21 @@ class AppStore extends ChangeNotifier {
           bodyWeightKg: currentWeightKg,
         );
       });
+
+  List<MealEntry> get todayMeals {
+    final now = DateTime.now();
+    return meals.where((meal) =>
+      meal.date.year == now.year &&
+      meal.date.month == now.month &&
+      meal.date.day == now.day,
+    ).toList();
+  }
+
+  double get todayMealCalories =>
+      todayMeals.fold<double>(0, (sum, meal) => sum + meal.calories);
+
+  double get todayProteinG =>
+      todayMeals.fold<double>(0, (sum, meal) => sum + (meal.proteinG ?? 0));
 
   StrengthBest? get latestStrengthBest {
     StrengthBest? best;

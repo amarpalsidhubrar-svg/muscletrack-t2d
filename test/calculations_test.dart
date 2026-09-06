@@ -33,4 +33,24 @@ void main() {
       closeTo(210, 0.01),
     );
   });
+
+  test('Mifflin-St Jeor resting energy male', () {
+    expect(
+      estimatedRestingEnergy(weightKg: 80, heightCm: 177, age: 34, sex: 'Male'),
+      closeTo(1741.25, 0.01),
+    );
+  });
+
+  test('estimated daily energy requirement', () {
+    expect(
+      estimatedDailyEnergyRequirement(
+        weightKg: 80,
+        heightCm: 177,
+        age: 34,
+        sex: 'Male',
+        activityFactor: 1.375,
+      ),
+      closeTo(2394.22, 0.02),
+    );
+  });
 }
