@@ -7,7 +7,9 @@ import '../calculations.dart';
 import '../widgets/common.dart';
 import 'log_activity_screen.dart';
 import 'log_weight_screen.dart';
+import 'meal_log_screen.dart';
 import 'strength_workout_screen.dart';
+import 'workout_history_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final AppStore store;
@@ -28,7 +30,7 @@ class HomeScreen extends StatelessWidget {
                   fontWeight: FontWeight.w900,
                 )),
         const SizedBox(height: 4),
-        Text('Monitor weight, activity and strength together.',
+        Text('Monitor weight, activity, strength, recovery and nutrition together.',
             style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 18),
         Card(
@@ -82,6 +84,28 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: MetricCard(
+                label: 'Food logged',
+                value: '${store.todayMealCalories.toStringAsFixed(0)} kcal',
+                subtitle: '${store.todayProteinG.toStringAsFixed(0)} g protein',
+                icon: Icons.restaurant_outlined,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: MetricCard(
+                label: 'Meals',
+                value: '${store.todayMeals.length}',
+                subtitle: 'Logged today',
+                icon: Icons.lunch_dining_outlined,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -109,7 +133,7 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     Expanded(child: _MiniStat(label: 'MET-min', value: store.weeklyMetMinutes.toStringAsFixed(0))),
                     const SizedBox(width: 8),
-                    Expanded(child: _MiniStat(label: 'Energy', value: '${store.weeklyCalories.toStringAsFixed(0)} kcal')),
+                    Expanded(child: _MiniStat(label: 'Exercise energy', value: '${store.weeklyCalories.toStringAsFixed(0)} kcal')),
                   ],
                 ),
               ],
@@ -135,6 +159,22 @@ class HomeScreen extends StatelessWidget {
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => StrengthWorkoutScreen(store: store)),
+              ),
+            ),
+            ActionChip(
+              avatar: const Icon(Icons.history, size: 18),
+              label: const Text('Workout history'),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => WorkoutHistoryScreen(store: store)),
+              ),
+            ),
+            ActionChip(
+              avatar: const Icon(Icons.restaurant_outlined, size: 18),
+              label: const Text('Meal'),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => MealLogScreen(store: store)),
               ),
             ),
             ActionChip(
