@@ -16,6 +16,14 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Build AFCD Release 3 reference data
+        run: |
+          python -m pip install --quiet openpyxl
+          python tool/build_afcd_data.py
+
+      - name: Prepare v0.2.4 preview sources
+        run: python tool/prepare_v024_preview.py
+
       - name: Create Android runner
         run: |
           chmod +x tool/bootstrap_android.sh
@@ -37,6 +45,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: muscletrack-v02-preview-apk
+          name: muscletrack-v024-afcd-preview-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 30
