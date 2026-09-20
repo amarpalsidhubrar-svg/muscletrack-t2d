@@ -32,6 +32,10 @@ jobs:
         run: |
           chmod +x tool/bootstrap_android.sh
           ./tool/bootstrap_android.sh
+      - name: Configure preview app
+        run: |
+          chmod +x tool/configure_preview_android.sh
+          ./tool/configure_preview_android.sh
       - name: Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
       - name: Test calculations
