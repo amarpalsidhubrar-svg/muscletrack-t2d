@@ -30,6 +30,9 @@ jobs:
       - name: Apply dashboard interactions
         run: python tool/apply_dashboard_interactions.py
 
+      - name: Apply workout-only UI and calendar
+        run: python tool/apply_workout_only_ui.py
+
       - name: Create Android runner
         run: |
           chmod +x tool/bootstrap_android.sh
@@ -51,6 +54,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: muscletrack-v028-interactive-dashboard-preview-apk
+          name: muscletrack-v029-workout-calendar-preview-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 30
