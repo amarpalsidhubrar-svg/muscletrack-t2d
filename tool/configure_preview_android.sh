@@ -11,7 +11,7 @@ done < <(grep -rlZ 'au\.com\.muscletrack\.t2d' "$ROOT/android" || true)
 
 MANIFEST="$ROOT/android/app/src/main/AndroidManifest.xml"
 if [[ -f "$MANIFEST" ]]; then
-  sed -i 's/android:label="muscletrack_t2d"/android:label="MuscleTrack T2D Preview"/' "$MANIFEST"
+  sed -i 's/android:label="muscletrack_t2d"/android:label="MuscleTrack Preview"/' "$MANIFEST"
   sed -i 's/android:label="MuscleTrack T2D"/android:label="MuscleTrack T2D Preview"/' "$MANIFEST"
 fi
 
