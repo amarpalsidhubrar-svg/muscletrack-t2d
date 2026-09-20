@@ -29,13 +29,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     // Legacy profile fields are retained for database compatibility only.
     // Version 0.3 does not ask the user for health or body-composition data.
     await widget.store.saveProfile(
-      UserProfile(
-        name: _name.text.trim(),
-        age: 18,
-        sex: 'Not specified',
-        heightCm: 0,
-        baselineWeightKg: 0,
-      ),
+      UserProfile(name: _name.text.trim()),
     );
 
     if (mounted) setState(() => _saving = false);
