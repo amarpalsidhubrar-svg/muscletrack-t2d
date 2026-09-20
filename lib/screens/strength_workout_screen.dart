@@ -176,7 +176,6 @@ class _StrengthWorkoutScreenState extends State<StrengthWorkoutScreen> {
       durationMin: duration,
       met: double.tryParse(_met.text),
       source: _source,
-      deviceCalories: null,
       fatigue: _fatigue,
       sleepQuality: _sleepQuality,
       muscleSoreness: _muscleSoreness,
