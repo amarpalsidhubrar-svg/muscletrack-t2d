@@ -217,7 +217,7 @@ class _Header extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('MuscleTrack T2D',
+            Text('MuscleTrack',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w900,
                 color: const Color(0xFF092C2B),
@@ -665,4 +665,4 @@ p = pub.read_text()
 p = re.sub(r'^version:\s*.*$', 'version: 0.2.9+9', p, flags=re.M)
 pub.write_text(p)
 
-print('Applied workout-only UI, calendar, and removed visible calorie/meal/medication navigation')
+print('Applied MuscleTrack v0.3 workout-only UI, calendar, and general fitness branding')
