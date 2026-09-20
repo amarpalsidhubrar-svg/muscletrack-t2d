@@ -57,7 +57,6 @@ class StrengthWorkoutScreen extends StatefulWidget {
 class _StrengthWorkoutScreenState extends State<StrengthWorkoutScreen> {
   late final TextEditingController _duration;
   late final TextEditingController _met;
-  late final TextEditingController _deviceCalories;
   late final TextEditingController _sleepHours;
   late final TextEditingController _notes;
   late DateTime _date;
@@ -80,8 +79,6 @@ class _StrengthWorkoutScreenState extends State<StrengthWorkoutScreen> {
     _duration =
         TextEditingController(text: existing?.durationMin.toString() ?? '45');
     _met = TextEditingController(text: existing?.met?.toString() ?? '3.5');
-    _deviceCalories =
-        TextEditingController(text: existing?.deviceCalories?.toString() ?? '');
     _sleepHours =
         TextEditingController(text: existing?.sleepHours?.toString() ?? '');
     _notes = TextEditingController(text: existing?.notes ?? '');
@@ -120,7 +117,6 @@ class _StrengthWorkoutScreenState extends State<StrengthWorkoutScreen> {
   void dispose() {
     _duration.dispose();
     _met.dispose();
-    _deviceCalories.dispose();
     _sleepHours.dispose();
     _notes.dispose();
     for (final e in _exercises) {
@@ -180,7 +176,7 @@ class _StrengthWorkoutScreenState extends State<StrengthWorkoutScreen> {
       durationMin: duration,
       met: double.tryParse(_met.text),
       source: _source,
-      deviceCalories: double.tryParse(_deviceCalories.text),
+      deviceCalories: null,
       fatigue: _fatigue,
       sleepQuality: _sleepQuality,
       muscleSoreness: _muscleSoreness,
@@ -269,12 +265,6 @@ class _StrengthWorkoutScreenState extends State<StrengthWorkoutScreen> {
       double.tryParse(_met.text),
       int.tryParse(_duration.text) ?? 0,
     );
-    final estimated = estimatedCalories(
-      met: double.tryParse(_met.text),
-      minutes: int.tryParse(_duration.text) ?? 0,
-      bodyWeightKg: widget.store.currentWeightKg,
-    );
-
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAF8),
       appBar: AppBar(
@@ -424,17 +414,6 @@ class _StrengthWorkoutScreenState extends State<StrengthWorkoutScreen> {
                   onChanged: (v) =>
                       setState(() => _source = v ?? _source),
                 ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _deviceCalories,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  onTap: () => _selectAll(_deviceCalories),
-                  decoration: const InputDecoration(
-                    labelText: 'Device calories',
-                    hintText: 'Optional',
-                    suffixText: 'kcal',
-                  ),
                 ),
               ],
             ),
@@ -548,11 +527,6 @@ class _StrengthWorkoutScreenState extends State<StrengthWorkoutScreen> {
                   const SizedBox(height: 10),
                   Text('Training volume: ${volume.toStringAsFixed(0)} kg'),
                   Text('MET-min: ${mets.toStringAsFixed(0)}'),
-                  Text(
-                    _deviceCalories.text.trim().isNotEmpty
-                        ? 'Energy: ${_deviceCalories.text} kcal (device-entered)'
-                        : 'Estimated energy: ${estimated.toStringAsFixed(0)} kcal',
-                  ),
                 ],
               ),
             ),
