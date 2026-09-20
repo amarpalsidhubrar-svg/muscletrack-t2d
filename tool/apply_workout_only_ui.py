@@ -631,34 +631,6 @@ class _Dow extends StatelessWidget {
 }
 ''')
 
-# Remove visible calorie fields/summary from workout logger. Keep database compatibility.
-workout = ROOT/'lib/screens/strength_workout_screen.dart'
-w = workout.read_text()
-
-device_field = """                const SizedBox(height: 10),
-                TextField(
-                  controller: _deviceCalories,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  onTap: () => _selectAll(_deviceCalories),
-                  decoration: const InputDecoration(
-                    labelText: 'Device calories',
-                    hintText: 'Optional',
-                    suffixText: 'kcal',
-                  ),
-                ),
-"""
-w = w.replace(device_field, "")
-
-energy_summary = """                  Text(
-                    _deviceCalories.text.trim().isNotEmpty
-                        ? 'Energy: ${_deviceCalories.text} kcal (device-entered)'
-                        : 'Estimated energy: ${estimated.toStringAsFixed(0)} kcal',
-                  ),
-"""
-w = w.replace(energy_summary, "")
-workout.write_text(w)
-
 # Preview version only.
 pub = ROOT/'pubspec.yaml'
 p = pub.read_text()
