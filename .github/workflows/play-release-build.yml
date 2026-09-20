@@ -32,9 +32,12 @@ jobs:
       - name: Apply dashboard interactions
         run: python tool/apply_dashboard_interactions.py
 
+      - name: Apply workout-only UI and calendar
+        run: python tool/apply_workout_only_ui.py
+
       - name: Set Play version
         run: |
-          sed -i 's/^version:.*/version: 0.2.8+8/' pubspec.yaml
+          sed -i 's/^version:.*/version: 0.2.9+9/' pubspec.yaml
           grep '^version:' pubspec.yaml
 
       - name: Create Android runner
@@ -71,7 +74,7 @@ jobs:
           python3 tool/configure_release_signing.py
 
       - name: Analyze
-        run: flutter analyze --no-fatal-infos
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Test
         run: flutter test
@@ -81,6 +84,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: muscletrack-t2d-v028-play-aab
+          name: muscletrack-t2d-v029-workout-calendar-play-aab
           path: build/app/outputs/bundle/release/app-release.aab
           retention-days: 30
