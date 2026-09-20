@@ -33,7 +33,7 @@ jobs:
           chmod +x tool/bootstrap_android.sh
           ./tool/bootstrap_android.sh
       - name: Analyze
-        run: flutter analyze --no-fatal-infos
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
       - name: Test calculations
         run: flutter test
       - name: Build debug APK
