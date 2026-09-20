@@ -11,21 +11,13 @@ class AppStore extends ChangeNotifier {
 
   bool loading = true;
   UserProfile? profile;
-  List<WeightEntry> weights = [];
-  List<MedicationEntry> medications = [];
   List<WorkoutSession> workouts = [];
-  List<MealEntry> meals = [];
-  Goals goals = const Goals();
 
   Future<void> load() async {
     loading = true;
     notifyListeners();
     profile = await db.loadProfile();
-    weights = await db.loadWeights();
-    medications = await db.loadMedications();
     workouts = await db.loadWorkouts();
-    meals = await db.loadMeals();
-    goals = await db.loadGoals();
     loading = false;
     notifyListeners();
   }
@@ -33,16 +25,6 @@ class AppStore extends ChangeNotifier {
   Future<void> saveProfile(UserProfile value) async {
     profile = value;
     await db.saveProfile(value);
-    await refresh();
-  }
-
-  Future<void> addWeight(WeightEntry value) async {
-    await db.addWeight(value);
-    await refresh();
-  }
-
-  Future<void> addMedication(MedicationEntry value) async {
-    await db.addMedication(value);
     await refresh();
   }
 
@@ -61,28 +43,9 @@ class AppStore extends ChangeNotifier {
     await refresh();
   }
 
-  Future<void> addMeal(MealEntry value) async {
-    await db.addMeal(value);
-    await refresh();
-  }
-
-  Future<void> deleteMeal(int mealId) async {
-    await db.deleteMeal(mealId);
-    await refresh();
-  }
-
-  Future<void> saveGoals(Goals value) async {
-    goals = value;
-    await db.saveGoals(value);
-    notifyListeners();
-  }
-
   Future<void> refresh() async {
-    weights = await db.loadWeights();
-    medications = await db.loadMedications();
+    profile = await db.loadProfile();
     workouts = await db.loadWorkouts();
-    meals = await db.loadMeals();
-    goals = await db.loadGoals();
     notifyListeners();
   }
 
@@ -91,60 +54,17 @@ class AppStore extends ChangeNotifier {
     await load();
   }
 
-  double get currentWeightKg =>
-      weights.isNotEmpty ? weights.first.weightKg : (profile?.baselineWeightKg ?? 0);
-
-  double get currentBmi => profile == null ? 0 : bmi(currentWeightKg, profile!.heightCm);
-
-  double get weightChangePct => profile == null
-      ? 0
-      : percentWeightChange(profile!.baselineWeightKg, currentWeightKg);
-
   DateTime get startOfCurrentWeek {
     final now = DateTime.now();
     final day = DateTime(now.year, now.month, now.day);
     return day.subtract(Duration(days: day.weekday - 1));
   }
 
-  List<WorkoutSession> get thisWeekWorkouts => workouts
-      .where((w) => !w.date.isBefore(startOfCurrentWeek))
-      .toList();
+  List<WorkoutSession> get thisWeekWorkouts =>
+      workouts.where((w) => !w.date.isBefore(startOfCurrentWeek)).toList();
 
   int get weeklyActivityMinutes =>
       thisWeekWorkouts.fold<int>(0, (sum, w) => sum + w.durationMin);
-
-  int get weeklyStrengthSessions => thisWeekWorkouts
-      .where((w) => w.workoutType == 'Strength')
-      .length;
-
-  double get weeklyMetMinutes => thisWeekWorkouts.fold<double>(
-        0,
-        (sum, w) => sum + metMinutes(w.met, w.durationMin),
-      );
-
-  double get weeklyCalories => thisWeekWorkouts.fold<double>(0, (sum, w) {
-        if (w.deviceCalories != null) return sum + w.deviceCalories!;
-        return sum + estimatedCalories(
-          met: w.met,
-          minutes: w.durationMin,
-          bodyWeightKg: currentWeightKg,
-        );
-      });
-
-  List<MealEntry> get todayMeals {
-    final now = DateTime.now();
-    return meals.where((meal) =>
-      meal.date.year == now.year &&
-      meal.date.month == now.month &&
-      meal.date.day == now.day,
-    ).toList();
-  }
-
-  double get todayMealCalories =>
-      todayMeals.fold<double>(0, (sum, meal) => sum + meal.calories);
-
-  double get todayProteinG =>
-      todayMeals.fold<double>(0, (sum, meal) => sum + (meal.proteinG ?? 0));
 
   StrengthBest? get latestStrengthBest {
     StrengthBest? best;
@@ -167,7 +87,9 @@ class AppStore extends ChangeNotifier {
     double? best;
     for (final workout in workouts) {
       for (final set in workout.sets) {
-        if (set.exerciseName.toLowerCase() != exerciseName.toLowerCase()) continue;
+        if (set.exerciseName.toLowerCase() != exerciseName.toLowerCase()) {
+          continue;
+        }
         final value = epleyE1rm(set.weightKg, set.reps);
         if (best == null || value > best) best = value;
       }
