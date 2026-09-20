@@ -33,11 +33,6 @@ class AppStore extends ChangeNotifier {
   Future<void> saveProfile(UserProfile value) async {
     profile = value;
     await db.saveProfile(value);
-    if (weights.isEmpty) {
-      await db.addWeight(
-        WeightEntry(date: DateTime.now(), weightKg: value.baselineWeightKg),
-      );
-    }
     await refresh();
   }
 
