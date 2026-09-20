@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -6,41 +8,27 @@ import 'models.dart';
 class AppDatabase {
   Database? _database;
 
+  Future<String> get _newPath async =>
+      join(await getDatabasesPath(), 'muscletrack_v03.db');
+
+  Future<String> get _oldPath async =>
+      join(await getDatabasesPath(), 'muscletrack_v01.db');
+
   Future<Database> get database async {
     if (_database != null) return _database!;
-    final dbPath = join(await getDatabasesPath(), 'muscletrack_v01.db');
+
+    final newPath = await _newPath;
+    final wasNew = !await databaseExists(newPath);
+
     _database = await openDatabase(
-      dbPath,
-      version: 3,
+      newPath,
+      version: 1,
       onConfigure: (db) async => db.execute('PRAGMA foreign_keys = ON'),
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE profile(
             id INTEGER PRIMARY KEY,
-            name TEXT NOT NULL,
-            age INTEGER NOT NULL,
-            sex TEXT NOT NULL,
-            height_cm REAL NOT NULL,
-            baseline_weight_kg REAL NOT NULL
-          )
-        ''');
-        await db.execute('''
-          CREATE TABLE weight_entries(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT NOT NULL,
-            weight_kg REAL NOT NULL,
-            body_fat_pct REAL,
-            lean_mass_kg REAL
-          )
-        ''');
-        await db.execute('''
-          CREATE TABLE medications(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT NOT NULL,
-            medication_name TEXT NOT NULL,
-            medication_class TEXT NOT NULL,
-            dose TEXT NOT NULL,
-            note TEXT NOT NULL DEFAULT ''
+            name TEXT NOT NULL
           )
         ''');
         await db.execute('''
@@ -51,7 +39,6 @@ class AppDatabase {
             duration_min INTEGER NOT NULL,
             met REAL,
             source TEXT NOT NULL,
-            device_calories REAL,
             fatigue INTEGER,
             sleep_quality INTEGER,
             muscle_soreness INTEGER,
@@ -73,61 +60,85 @@ class AppDatabase {
             FOREIGN KEY(workout_id) REFERENCES workouts(id) ON DELETE CASCADE
           )
         ''');
-        await db.execute('''
-          CREATE TABLE meals(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT NOT NULL,
-            meal_type TEXT NOT NULL,
-            description TEXT NOT NULL,
-            calories REAL NOT NULL,
-            protein_g REAL,
-            carbs_g REAL,
-            fat_g REAL,
-            fibre_g REAL
-          )
-        ''');
-        await db.execute('''
-          CREATE TABLE goals(
-            id INTEGER PRIMARY KEY,
-            target_weight_kg REAL,
-            weekly_activity_min INTEGER NOT NULL,
-            weekly_strength_sessions INTEGER NOT NULL,
-            target_exercise TEXT NOT NULL,
-            target_e1rm_kg REAL
-          )
-        ''');
-      },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
-          await db.execute('ALTER TABLE workouts ADD COLUMN fatigue INTEGER');
-          await db.execute('ALTER TABLE workouts ADD COLUMN sleep_quality INTEGER');
-          await db.execute('ALTER TABLE workouts ADD COLUMN muscle_soreness INTEGER');
-          await db.execute('ALTER TABLE workouts ADD COLUMN discomfort INTEGER');
-          await db.execute('ALTER TABLE workouts ADD COLUMN readiness INTEGER');
-          await db.execute('ALTER TABLE workouts ADD COLUMN sleep_hours REAL');
-          await db.execute('ALTER TABLE workouts ADD COLUMN session_rpe INTEGER');
-          await db.execute('''
-            CREATE TABLE meals(
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              date TEXT NOT NULL,
-              meal_type TEXT NOT NULL,
-              description TEXT NOT NULL,
-              calories REAL NOT NULL,
-              protein_g REAL,
-              carbs_g REAL,
-              fat_g REAL,
-              fibre_g REAL
-            )
-          ''');
-        }
-        if (oldVersion < 3) {
-          await db.execute(
-            "ALTER TABLE workouts ADD COLUMN notes TEXT NOT NULL DEFAULT ''",
-          );
-        }
       },
     );
+
+    if (wasNew) {
+      await _migrateLegacyWorkoutData(_database!);
+    }
+
     return _database!;
+  }
+
+  Future<void> _migrateLegacyWorkoutData(Database target) async {
+    final oldPath = await _oldPath;
+    if (!await databaseExists(oldPath)) return;
+
+    Database? oldDb;
+    try {
+      oldDb = await openDatabase(oldPath, readOnly: true);
+
+      final profileRows = await oldDb.query('profile', where: 'id = 1', limit: 1);
+      if (profileRows.isNotEmpty) {
+        final name = (profileRows.first['name'] as String?)?.trim() ?? '';
+        if (name.isNotEmpty) {
+          await target.insert(
+            'profile',
+            {'id': 1, 'name': name},
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+      }
+
+      final columns = await oldDb.rawQuery('PRAGMA table_info(workouts)');
+      final available = columns
+          .map((row) => row['name'] as String?)
+          .whereType<String>()
+          .toSet();
+
+      Object? read(Map<String, Object?> row, String key) =>
+          available.contains(key) ? row[key] : null;
+
+      final workoutRows = await oldDb.query('workouts', orderBy: 'date ASC');
+      for (final row in workoutRows) {
+        final oldWorkoutId = row['id'] as int;
+        final newWorkoutId = await target.insert('workouts', {
+          'date': row['date'],
+          'workout_type': row['workout_type'],
+          'duration_min': row['duration_min'],
+          'met': read(row, 'met'),
+          'source': read(row, 'source') ?? 'Manual entry',
+          'fatigue': read(row, 'fatigue'),
+          'sleep_quality': read(row, 'sleep_quality'),
+          'muscle_soreness': read(row, 'muscle_soreness'),
+          'discomfort': read(row, 'discomfort'),
+          'readiness': read(row, 'readiness'),
+          'sleep_hours': read(row, 'sleep_hours'),
+          'session_rpe': read(row, 'session_rpe'),
+          'notes': read(row, 'notes') ?? '',
+        });
+
+        final setRows = await oldDb.query(
+          'exercise_sets',
+          where: 'workout_id = ?',
+          whereArgs: [oldWorkoutId],
+          orderBy: 'exercise_name, set_number',
+        );
+        for (final set in setRows) {
+          await target.insert('exercise_sets', {
+            'workout_id': newWorkoutId,
+            'exercise_name': set['exercise_name'],
+            'set_number': set['set_number'],
+            'reps': set['reps'],
+            'weight_kg': set['weight_kg'],
+          });
+        }
+      }
+    } catch (_) {
+      // A legacy database is optional; a clean Version 0.3 database remains usable.
+    } finally {
+      await oldDb?.close();
+    }
   }
 
   Future<void> saveProfile(UserProfile profile) async {
@@ -143,28 +154,6 @@ class AppDatabase {
     final db = await database;
     final rows = await db.query('profile', where: 'id = 1', limit: 1);
     return rows.isEmpty ? null : UserProfile.fromMap(rows.first);
-  }
-
-  Future<int> addWeight(WeightEntry entry) async {
-    final db = await database;
-    return db.insert('weight_entries', entry.toMap());
-  }
-
-  Future<List<WeightEntry>> loadWeights() async {
-    final db = await database;
-    final rows = await db.query('weight_entries', orderBy: 'date DESC');
-    return rows.map(WeightEntry.fromMap).toList();
-  }
-
-  Future<int> addMedication(MedicationEntry entry) async {
-    final db = await database;
-    return db.insert('medications', entry.toMap());
-  }
-
-  Future<List<MedicationEntry>> loadMedications() async {
-    final db = await database;
-    final rows = await db.query('medications', orderBy: 'date DESC');
-    return rows.map(MedicationEntry.fromMap).toList();
   }
 
   Future<int> addWorkout(WorkoutSession session) async {
@@ -209,6 +198,7 @@ class AppDatabase {
     final db = await database;
     final workoutRows = await db.query('workouts', orderBy: 'date DESC');
     final result = <WorkoutSession>[];
+
     for (final row in workoutRows) {
       final workoutId = row['id'] as int;
       final setRows = await db.query(
@@ -224,8 +214,7 @@ class AppDatabase {
           workoutType: row['workout_type'] as String,
           durationMin: (row['duration_min'] as num).toInt(),
           met: (row['met'] as num?)?.toDouble(),
-          source: row['source'] as String,
-          deviceCalories: (row['device_calories'] as num?)?.toDouble(),
+          source: (row['source'] as String?) ?? 'Manual entry',
           fatigue: (row['fatigue'] as num?)?.toInt(),
           sleepQuality: (row['sleep_quality'] as num?)?.toInt(),
           muscleSoreness: (row['muscle_soreness'] as num?)?.toInt(),
@@ -241,47 +230,17 @@ class AppDatabase {
     return result;
   }
 
-  Future<int> addMeal(MealEntry entry) async {
-    final db = await database;
-    return db.insert('meals', entry.toMap());
-  }
-
-  Future<void> deleteMeal(int mealId) async {
-    final db = await database;
-    await db.delete('meals', where: 'id = ?', whereArgs: [mealId]);
-  }
-
-  Future<List<MealEntry>> loadMeals() async {
-    final db = await database;
-    final rows = await db.query('meals', orderBy: 'date DESC');
-    return rows.map(MealEntry.fromMap).toList();
-  }
-
-  Future<void> saveGoals(Goals goals) async {
-    final db = await database;
-    await db.insert(
-      'goals',
-      goals.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-  }
-
-  Future<Goals> loadGoals() async {
-    final db = await database;
-    final rows = await db.query('goals', where: 'id = 1', limit: 1);
-    return rows.isEmpty ? const Goals() : Goals.fromMap(rows.first);
-  }
-
   Future<void> clearAll() async {
     final db = await database;
     await db.transaction((txn) async {
       await txn.delete('exercise_sets');
       await txn.delete('workouts');
-      await txn.delete('meals');
-      await txn.delete('medications');
-      await txn.delete('weight_entries');
-      await txn.delete('goals');
       await txn.delete('profile');
     });
+
+    final oldPath = await _oldPath;
+    if (await File(oldPath).exists()) {
+      await deleteDatabase(oldPath);
+    }
   }
 }
