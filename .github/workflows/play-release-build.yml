@@ -18,26 +18,15 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Build AFCD Release 3 reference data
-        run: |
-          python -m pip install --quiet openpyxl
-          python tool/build_afcd_data.py
-
-      - name: Prepare v0.2 sources
-        run: python tool/prepare_v024_preview.py
-
       - name: Apply Option 2 activity pulse
         run: python tool/apply_activity_pulse.py
-
-      - name: Apply dashboard interactions
-        run: python tool/apply_dashboard_interactions.py
 
       - name: Apply workout-only UI and calendar
         run: python tool/apply_workout_only_ui.py
 
       - name: Set Play version
         run: |
-          sed -i 's/^version:.*/version: 0.2.9+9/' pubspec.yaml
+          sed -i 's/^version:.*/version: 0.3.0+10/' pubspec.yaml
           grep '^version:' pubspec.yaml
 
       - name: Create Android runner
@@ -84,6 +73,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: muscletrack-t2d-v029-workout-calendar-play-aab
+          name: muscletrack-v030-play-aab
           path: build/app/outputs/bundle/release/app-release.aab
           retention-days: 30
