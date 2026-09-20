@@ -114,7 +114,7 @@ class MonitoringNotice extends StatelessWidget {
           SizedBox(width: 9),
           Expanded(
             child: Text(
-              'Monitoring only: this app records and visualises information. It does not diagnose disease, recommend treatment, or advise changes to medicines, diet, or exercise.',
+              'Training log: MuscleTrack records workout information such as exercises, sets, reps, load and session notes for personal fitness tracking.',
               style: TextStyle(fontSize: 12, height: 1.35, color: Color(0xFF375149)),
             ),
           ),
