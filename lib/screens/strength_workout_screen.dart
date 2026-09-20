@@ -414,7 +414,6 @@ class _StrengthWorkoutScreenState extends State<StrengthWorkoutScreen> {
                   onChanged: (v) =>
                       setState(() => _source = v ?? _source),
                 ),
-                ),
               ],
             ),
           ),
@@ -557,7 +556,7 @@ class _StrengthWorkoutScreenState extends State<StrengthWorkoutScreen> {
           ],
           const SizedBox(height: 10),
           Text(
-            'Estimated 1RM values use the Epley formula for monitoring trends only.',
+            'Estimated 1RM values use the Epley formula for strength trends.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
