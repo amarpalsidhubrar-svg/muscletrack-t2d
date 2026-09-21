@@ -18,11 +18,11 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Apply Option 2 activity pulse
-        run: python tool/apply_activity_pulse.py
-
       - name: Apply workout-only UI and calendar
         run: python tool/apply_workout_only_ui.py
+
+      - name: Apply streak rewards and avatar moods
+        run: python tool/apply_rewards_v031.py
 
       - name: Create Android runner
         run: |
@@ -45,5 +45,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: muscletrack-v030-debug-apk
+          name: muscletrack-v031-streak-debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
