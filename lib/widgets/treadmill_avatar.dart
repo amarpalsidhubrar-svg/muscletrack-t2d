@@ -1,15 +1,18 @@
 import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
+
+import '../streaks.dart';
 
 class TreadmillAvatar extends StatefulWidget {
   final double width;
   final double height;
+  final TrainingAvatarMood mood;
 
   const TreadmillAvatar({
     super.key,
-    this.width = 180,
-    this.height = 160,
+    this.width = 168,
+    this.height = 180,
+    this.mood = TrainingAvatarMood.happy,
   });
 
   @override
@@ -25,7 +28,7 @@ class _TreadmillAvatarState extends State<TreadmillAvatar>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 820),
+      duration: const Duration(milliseconds: 2600),
     )..repeat();
   }
 
@@ -43,8 +46,8 @@ class _TreadmillAvatarState extends State<TreadmillAvatar>
         height: widget.height,
         child: AnimatedBuilder(
           animation: _controller,
-          builder: (context, _) => CustomPaint(
-            painter: _RunnerPainter(progress: _controller.value),
+          builder: (_, __) => CustomPaint(
+            painter: _MoodAvatarPainter(_controller.value, widget.mood),
           ),
         ),
       ),
@@ -52,273 +55,294 @@ class _TreadmillAvatarState extends State<TreadmillAvatar>
   }
 }
 
-class _RunnerPainter extends CustomPainter {
-  final double progress;
-  const _RunnerPainter({required this.progress});
+class _MoodAvatarPainter extends CustomPainter {
+  final double t;
+  final TrainingAvatarMood mood;
+
+  _MoodAvatarPainter(this.t, this.mood);
+
+  static const green = Color(0xFF087B55);
+  static const dark = Color(0xFF17312A);
+  static const skin = Color(0xFFD69A72);
+  static const shirt = Color(0xFF0B8C5E);
+  static const shorts = Color(0xFF203A34);
 
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final phase = progress * math.pi * 2;
-    final swing = math.sin(phase);
-    final bounce = math.sin(phase * 2) * h * 0.012;
+    final centre = Offset(size.width * .52, size.height * .52);
+    final s = math.min(size.width, size.height);
+    final phase = t * math.pi * 2;
 
-    final skin = const Color(0xFFD69A6A);
-    final skinDark = const Color(0xFFB9794C);
-    final hair = const Color(0xFF2C211B);
-    final shirt = const Color(0xFF31393C);
-    final shorts = const Color(0xFF20272A);
-    final shoe = const Color(0xFFF7F7F5);
-    final treadmill = const Color(0xFF343B3D);
-    final treadmillDark = const Color(0xFF202628);
-    final accent = const Color(0xFF087B55);
+    _drawBackground(canvas, centre, s);
 
-    // Ground shadow.
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(w * 0.58, h * 0.86),
-        width: w * 0.72,
-        height: h * 0.08,
-      ),
-      Paint()..color = const Color(0x18000000),
+    switch (mood) {
+      case TrainingAvatarMood.happy:
+        _drawHappy(canvas, centre, s, phase);
+        break;
+      case TrainingAvatarMood.recovery:
+        _drawRecovery(canvas, centre, s, phase);
+        break;
+      case TrainingAvatarMood.worried:
+        _drawWorried(canvas, centre, s, phase);
+        break;
+    }
+  }
+
+  void _drawBackground(Canvas canvas, Offset c, double s) {
+    final halo = switch (mood) {
+      TrainingAvatarMood.happy => const Color(0x2231B77B),
+      TrainingAvatarMood.recovery => const Color(0x222F80ED),
+      TrainingAvatarMood.worried => const Color(0x22E6A23C),
+    };
+    canvas.drawCircle(c, s * .39, Paint()..color = halo);
+    canvas.drawCircle(
+      c,
+      s * .31,
+      Paint()
+        ..color = Colors.white.withValues(alpha: .78)
+        ..style = PaintingStyle.fill,
     );
+  }
 
-    // Treadmill base and supports.
-    final beltY = h * 0.76;
-    final beltPaint = Paint()
-      ..color = treadmill
-      ..strokeWidth = h * 0.075
+  Paint _stroke(Color color, double width) => Paint()
+    ..color = color
+    ..strokeWidth = width
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round
+    ..style = PaintingStyle.stroke;
+
+  void _face(
+    Canvas canvas,
+    Offset head,
+    double r, {
+    required bool smile,
+    bool closedEyes = false,
+    bool worried = false,
+  }) {
+    canvas.drawCircle(head, r, Paint()..color = skin);
+    final eye = Paint()
+      ..color = dark
+      ..strokeWidth = r * .12
       ..strokeCap = StrokeCap.round;
-    canvas.drawLine(Offset(w * 0.12, beltY), Offset(w * 0.88, beltY), beltPaint);
 
-    final beltHighlight = Paint()
-      ..color = const Color(0xFF596164)
-      ..strokeWidth = h * 0.018
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(
-      Offset(w * 0.16, beltY - h * 0.012),
-      Offset(w * 0.84, beltY - h * 0.012),
-      beltHighlight,
-    );
-
-    final framePaint = Paint()
-      ..color = treadmillDark
-      ..strokeWidth = h * 0.034
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(
-      Offset(w * 0.77, beltY),
-      Offset(w * 0.82, h * 0.35),
-      framePaint,
-    );
-    canvas.drawLine(
-      Offset(w * 0.82, h * 0.35),
-      Offset(w * 0.95, h * 0.35),
-      framePaint,
-    );
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(w * 0.78, h * 0.24, w * 0.17, h * 0.13),
-        Radius.circular(w * 0.025),
-      ),
-      Paint()..color = const Color(0xFF41494B),
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(w * 0.81, h * 0.27, w * 0.11, h * 0.055),
-        Radius.circular(w * 0.012),
-      ),
-      Paint()..color = const Color(0xFFB9D7CE),
-    );
-
-    // Moving belt markers.
-    for (var i = 0; i < 5; i++) {
-      final x = w * (0.13 + (((i / 5) + progress) % 1) * 0.68);
+    if (closedEyes) {
       canvas.drawLine(
-        Offset(x, beltY),
-        Offset(x + w * 0.045, beltY),
-        Paint()
-          ..color = const Color(0x80FFFFFF)
-          ..strokeWidth = h * 0.012
-          ..strokeCap = StrokeCap.round,
+        head + Offset(-r * .48, -r * .08),
+        head + Offset(-r * .18, -r * .08),
+        eye,
       );
+      canvas.drawLine(
+        head + Offset(r * .18, -r * .08),
+        head + Offset(r * .48, -r * .08),
+        eye,
+      );
+    } else {
+      canvas.drawCircle(head + Offset(-r * .3, -r * .12), r * .08, eye);
+      canvas.drawCircle(head + Offset(r * .3, -r * .12), r * .08, eye);
     }
 
-    // Body landmarks.
-    final headCenter = Offset(w * 0.43, h * 0.22 + bounce);
-    final shoulder = Offset(w * 0.43, h * 0.34 + bounce);
-    final hip = Offset(w * 0.46, h * 0.52 + bounce);
+    final mouth = Path();
+    if (smile) {
+      mouth.moveTo(head.dx - r * .38, head.dy + r * .2);
+      mouth.quadraticBezierTo(
+        head.dx,
+        head.dy + r * .55,
+        head.dx + r * .38,
+        head.dy + r * .2,
+      );
+    } else if (worried) {
+      mouth.moveTo(head.dx - r * .35, head.dy + r * .38);
+      mouth.quadraticBezierTo(
+        head.dx,
+        head.dy + r * .08,
+        head.dx + r * .35,
+        head.dy + r * .38,
+      );
+    } else {
+      mouth.moveTo(head.dx - r * .3, head.dy + r * .26);
+      mouth.lineTo(head.dx + r * .3, head.dy + r * .26);
+    }
+    canvas.drawPath(mouth, _stroke(dark, r * .1));
 
-    // Neck.
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(
-          center: Offset(w * 0.43, h * 0.285 + bounce),
-          width: w * 0.045,
-          height: h * 0.07,
+    if (worried) {
+      canvas.drawLine(
+        head + Offset(-r * .48, -r * .42),
+        head + Offset(-r * .15, -r * .3),
+        _stroke(dark, r * .09),
+      );
+      canvas.drawLine(
+        head + Offset(r * .15, -r * .3),
+        head + Offset(r * .48, -r * .42),
+        _stroke(dark, r * .09),
+      );
+    }
+  }
+
+  void _drawHappy(Canvas canvas, Offset c, double s, double phase) {
+    final bob = math.sin(phase * 2) * s * .012;
+    final p = c + Offset(0, bob);
+    final head = p + Offset(s * .06, -s * .18);
+    _face(canvas, head, s * .055, smile: true);
+
+    final body = _stroke(shirt, s * .055);
+    final limb = _stroke(dark, s * .04);
+    final shoulder = p + Offset(s * .015, -s * .105);
+    final hip = p + Offset(-s * .015, s * .01);
+    canvas.drawLine(shoulder, hip, body);
+
+    final swing = math.sin(phase) * s * .04;
+    canvas.drawLine(
+      shoulder,
+      p + Offset(-s * .10 - swing, -s * .015),
+      limb,
+    );
+    canvas.drawLine(
+      shoulder,
+      p + Offset(s * .115 + swing, -s * .03),
+      limb,
+    );
+    canvas.drawLine(
+      hip,
+      p + Offset(-s * .11 - swing * .7, s * .145),
+      limb,
+    );
+    canvas.drawLine(
+      hip,
+      p + Offset(s * .12 + swing * .7, s * .11),
+      limb,
+    );
+
+    canvas.drawCircle(
+      p + Offset(-s * .23, -s * .18),
+      s * .018,
+      Paint()..color = const Color(0xFF31B77B),
+    );
+    canvas.drawCircle(
+      p + Offset(-s * .27, -s * .11),
+      s * .011,
+      Paint()..color = const Color(0xFF31B77B),
+    );
+  }
+
+  void _drawRecovery(Canvas canvas, Offset c, double s, double phase) {
+    final breathe = math.sin(phase) * s * .006;
+    final p = c + Offset(0, breathe);
+    final head = p + Offset(0, -s * .18);
+    _face(canvas, head, s * .058, smile: false, closedEyes: true);
+
+    canvas.drawLine(
+      p + Offset(0, -s * .105),
+      p + Offset(0, s * .025),
+      _stroke(shirt, s * .065),
+    );
+
+    final limb = _stroke(dark, s * .038);
+    canvas.drawLine(
+      p + Offset(0, -s * .07),
+      p + Offset(-s * .12, s * .02),
+      limb,
+    );
+    canvas.drawLine(
+      p + Offset(0, -s * .07),
+      p + Offset(s * .12, s * .02),
+      limb,
+    );
+
+    final leftLeg = Path()
+      ..moveTo(p.dx - s * .015, p.dy + s * .025)
+      ..quadraticBezierTo(
+        p.dx - s * .09,
+        p.dy + s * .08,
+        p.dx - s * .17,
+        p.dy + s * .105,
+      )
+      ..quadraticBezierTo(
+        p.dx - s * .08,
+        p.dy + s * .135,
+        p.dx,
+        p.dy + s * .095,
+      );
+    canvas.drawPath(leftLeg, limb);
+
+    final rightLeg = Path()
+      ..moveTo(p.dx + s * .015, p.dy + s * .025)
+      ..quadraticBezierTo(
+        p.dx + s * .09,
+        p.dy + s * .08,
+        p.dx + s * .17,
+        p.dy + s * .105,
+      )
+      ..quadraticBezierTo(
+        p.dx + s * .08,
+        p.dy + s * .135,
+        p.dx,
+        p.dy + s * .095,
+      );
+    canvas.drawPath(rightLeg, limb);
+
+    for (var i = 0; i < 3; i++) {
+      final radius = s * (.24 + i * .045 + (t * .025));
+      canvas.drawArc(
+        Rect.fromCircle(center: p, radius: radius),
+        math.pi * 1.05,
+        math.pi * .9,
+        false,
+        Paint()
+          ..color = const Color(0xFF4AA3DF).withValues(alpha: .16 - i * .035)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      );
+    }
+  }
+
+  void _drawWorried(Canvas canvas, Offset c, double s, double phase) {
+    final p = c + Offset(0, math.sin(phase) * s * .004);
+    final head = p + Offset(s * .015, -s * .17);
+    _face(canvas, head, s * .058, smile: false, worried: true);
+
+    final torso = _stroke(const Color(0xFF63766E), s * .055);
+    final limb = _stroke(dark, s * .038);
+    canvas.drawLine(
+      p + Offset(0, -s * .10),
+      p + Offset(-s * .025, s * .03),
+      torso,
+    );
+    canvas.drawLine(
+      p + Offset(-s * .01, -s * .065),
+      p + Offset(-s * .115, s * .015),
+      limb,
+    );
+    canvas.drawLine(
+      p + Offset(s * .005, -s * .07),
+      head + Offset(s * .055, s * .04),
+      limb,
+    );
+    canvas.drawLine(
+      p + Offset(-s * .025, s * .03),
+      p + Offset(-s * .09, s * .15),
+      limb,
+    );
+    canvas.drawLine(
+      p + Offset(-s * .025, s * .03),
+      p + Offset(s * .075, s * .145),
+      limb,
+    );
+
+    final q = TextPainter(
+      text: const TextSpan(
+        text: '?',
+        style: TextStyle(
+          color: Color(0xFFE59A2F),
+          fontSize: 24,
+          fontWeight: FontWeight.w900,
         ),
-        Radius.circular(w * 0.018),
       ),
-      Paint()..color = skin,
-    );
-
-    // Head with subtle face shadow.
-    canvas.drawOval(
-      Rect.fromCenter(center: headCenter, width: w * 0.12, height: h * 0.15),
-      Paint()..color = skin,
-    );
-    canvas.drawArc(
-      Rect.fromCenter(center: headCenter, width: w * 0.12, height: h * 0.15),
-      -math.pi / 2,
-      math.pi,
-      true,
-      Paint()..color = skinDark.withOpacity(0.18),
-    );
-
-    // Hair.
-    final hairPath = Path()
-      ..moveTo(w * 0.37, h * 0.20 + bounce)
-      ..quadraticBezierTo(w * 0.40, h * 0.12 + bounce, w * 0.48, h * 0.15 + bounce)
-      ..quadraticBezierTo(w * 0.51, h * 0.17 + bounce, w * 0.49, h * 0.22 + bounce)
-      ..quadraticBezierTo(w * 0.43, h * 0.17 + bounce, w * 0.37, h * 0.20 + bounce)
-      ..close();
-    canvas.drawPath(hairPath, Paint()..color = hair);
-
-    // Ear and face details.
-    canvas.drawCircle(
-      Offset(w * 0.49, h * 0.23 + bounce),
-      w * 0.012,
-      Paint()..color = skinDark,
-    );
-    canvas.drawCircle(
-      Offset(w * 0.462, h * 0.215 + bounce),
-      w * 0.006,
-      Paint()..color = const Color(0xFF201B18),
-    );
-    canvas.drawLine(
-      Offset(w * 0.477, h * 0.245 + bounce),
-      Offset(w * 0.493, h * 0.247 + bounce),
-      Paint()
-        ..color = const Color(0xFF8F4C3E)
-        ..strokeWidth = 1.4
-        ..strokeCap = StrokeCap.round,
-    );
-
-    // Torso shirt.
-    final torso = Path()
-      ..moveTo(w * 0.36, h * 0.33 + bounce)
-      ..quadraticBezierTo(w * 0.43, h * 0.30 + bounce, w * 0.50, h * 0.34 + bounce)
-      ..lineTo(w * 0.53, h * 0.52 + bounce)
-      ..quadraticBezierTo(w * 0.46, h * 0.56 + bounce, w * 0.39, h * 0.52 + bounce)
-      ..close();
-    canvas.drawPath(torso, Paint()..color = shirt);
-
-    // Shorts.
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(w * 0.39, h * 0.49 + bounce, w * 0.14, h * 0.11),
-        Radius.circular(w * 0.028),
-      ),
-      Paint()..color = shorts,
-    );
-
-    // Arms: use upper/lower segments for a more natural running posture.
-    final armSwing = swing * w * 0.075;
-    _drawLimb(
-      canvas,
-      shoulder + Offset(-w * 0.045, h * 0.015),
-      Offset(w * 0.33 - armSwing, h * 0.43 + bounce),
-      Offset(w * 0.38 - armSwing, h * 0.51 + bounce),
-      skin,
-      h * 0.034,
-    );
-    _drawLimb(
-      canvas,
-      shoulder + Offset(w * 0.04, h * 0.012),
-      Offset(w * 0.53 + armSwing, h * 0.40 + bounce),
-      Offset(w * 0.59 + armSwing, h * 0.35 + bounce),
-      skin,
-      h * 0.034,
-    );
-
-    // Legs.
-    final legSwing = swing * w * 0.115;
-    final knee1 = Offset(w * 0.38 - legSwing, h * 0.64 + bounce);
-    final foot1 = Offset(w * 0.29 - legSwing * 0.65, h * 0.74);
-    final knee2 = Offset(w * 0.53 + legSwing, h * 0.63 + bounce);
-    final foot2 = Offset(w * 0.61 + legSwing * 0.7, h * 0.74);
-
-    _drawLimb(
-      canvas,
-      hip + Offset(-w * 0.035, 0),
-      knee1,
-      foot1,
-      skin,
-      h * 0.045,
-    );
-    _drawLimb(
-      canvas,
-      hip + Offset(w * 0.045, 0),
-      knee2,
-      foot2,
-      skin,
-      h * 0.045,
-    );
-
-    // Shoes.
-    _drawShoe(canvas, foot1, shoe, accent, facingRight: false, h: h, w: w);
-    _drawShoe(canvas, foot2, shoe, accent, facingRight: true, h: h, w: w);
-  }
-
-  void _drawLimb(
-    Canvas canvas,
-    Offset start,
-    Offset joint,
-    Offset end,
-    Color color,
-    double width,
-  ) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = width
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    canvas.drawLine(start, joint, paint);
-    canvas.drawLine(joint, end, paint);
-    canvas.drawCircle(joint, width * 0.42, Paint()..color = color);
-  }
-
-  void _drawShoe(
-    Canvas canvas,
-    Offset foot,
-    Color base,
-    Color accent, {
-    required bool facingRight,
-    required double h,
-    required double w,
-  }) {
-    final direction = facingRight ? 1.0 : -1.0;
-    final rect = Rect.fromCenter(
-      center: foot + Offset(direction * w * 0.015, 0),
-      width: w * 0.10,
-      height: h * 0.035,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, Radius.circular(h * 0.018)),
-      Paint()..color = base,
-    );
-    canvas.drawLine(
-      Offset(rect.left + w * 0.02, rect.bottom - h * 0.007),
-      Offset(rect.right - w * 0.02, rect.bottom - h * 0.007),
-      Paint()
-        ..color = accent
-        ..strokeWidth = h * 0.006
-        ..strokeCap = StrokeCap.round,
-    );
+      textDirection: TextDirection.ltr,
+    )..layout();
+    q.paint(canvas, p + Offset(s * .17, -s * .20));
   }
 
   @override
-  bool shouldRepaint(covariant _RunnerPainter oldDelegate) =>
-      oldDelegate.progress != progress;
+  bool shouldRepaint(covariant _MoodAvatarPainter oldDelegate) =>
+      oldDelegate.t != t || oldDelegate.mood != mood;
 }
