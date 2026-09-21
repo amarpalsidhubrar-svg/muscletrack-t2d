@@ -28,7 +28,7 @@ class _TreadmillAvatarState extends State<TreadmillAvatar>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2600),
+      duration: const Duration(milliseconds: 2400),
     )..repeat();
   }
 
@@ -61,48 +61,11 @@ class _MoodAvatarPainter extends CustomPainter {
 
   _MoodAvatarPainter(this.t, this.mood);
 
-  static const green = Color(0xFF087B55);
   static const dark = Color(0xFF17312A);
   static const skin = Color(0xFFD69A72);
-  static const shirt = Color(0xFF0B8C5E);
-  static const shorts = Color(0xFF203A34);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final centre = Offset(size.width * .52, size.height * .52);
-    final s = math.min(size.width, size.height);
-    final phase = t * math.pi * 2;
-
-    _drawBackground(canvas, centre, s);
-
-    switch (mood) {
-      case TrainingAvatarMood.happy:
-        _drawHappy(canvas, centre, s, phase);
-        break;
-      case TrainingAvatarMood.recovery:
-        _drawRecovery(canvas, centre, s, phase);
-        break;
-      case TrainingAvatarMood.worried:
-        _drawWorried(canvas, centre, s, phase);
-        break;
-    }
-  }
-
-  void _drawBackground(Canvas canvas, Offset c, double s) {
-    final halo = switch (mood) {
-      TrainingAvatarMood.happy => const Color(0x2231B77B),
-      TrainingAvatarMood.recovery => const Color(0x222F80ED),
-      TrainingAvatarMood.worried => const Color(0x22E6A23C),
-    };
-    canvas.drawCircle(c, s * .39, Paint()..color = halo);
-    canvas.drawCircle(
-      c,
-      s * .31,
-      Paint()
-        ..color = Colors.white.withValues(alpha: .78)
-        ..style = PaintingStyle.fill,
-    );
-  }
+  static const green = Color(0xFF0B8C5E);
+  static const blue = Color(0xFF397ACB);
+  static const amber = Color(0xFFE59A2F);
 
   Paint _stroke(Color color, double width) => Paint()
     ..color = color
@@ -111,184 +74,172 @@ class _MoodAvatarPainter extends CustomPainter {
     ..strokeJoin = StrokeJoin.round
     ..style = PaintingStyle.stroke;
 
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = math.min(size.width, size.height);
+    final c = Offset(size.width * .52, size.height * .54);
+    final phase = t * math.pi * 2;
+
+    switch (mood) {
+      case TrainingAvatarMood.happy:
+        _drawHappy(canvas, c, s, phase);
+        break;
+      case TrainingAvatarMood.recovery:
+        _drawRecovery(canvas, c, s, phase);
+        break;
+      case TrainingAvatarMood.worried:
+        _drawWorried(canvas, c, s, phase);
+        break;
+    }
+  }
+
+  void _halo(Canvas canvas, Offset c, double s, Color color) {
+    canvas.drawCircle(c, s * .39, Paint()..color = color.withValues(alpha: .10));
+    canvas.drawCircle(c, s * .31, Paint()..color = Colors.white.withValues(alpha: .82));
+  }
+
   void _face(
     Canvas canvas,
     Offset head,
     double r, {
-    required bool smile,
+    required String expression,
     bool closedEyes = false,
-    bool worried = false,
   }) {
     canvas.drawCircle(head, r, Paint()..color = skin);
+
     final eye = Paint()
       ..color = dark
       ..strokeWidth = r * .12
       ..strokeCap = StrokeCap.round;
 
     if (closedEyes) {
-      canvas.drawLine(
-        head + Offset(-r * .48, -r * .08),
-        head + Offset(-r * .18, -r * .08),
-        eye,
+      canvas.drawArc(
+        Rect.fromCenter(center: head + Offset(-r * .3, -r * .08), width: r * .34, height: r * .18),
+        0,
+        math.pi,
+        false,
+        eye..style = PaintingStyle.stroke,
       );
-      canvas.drawLine(
-        head + Offset(r * .18, -r * .08),
-        head + Offset(r * .48, -r * .08),
+      canvas.drawArc(
+        Rect.fromCenter(center: head + Offset(r * .3, -r * .08), width: r * .34, height: r * .18),
+        0,
+        math.pi,
+        false,
         eye,
       );
     } else {
-      canvas.drawCircle(head + Offset(-r * .3, -r * .12), r * .08, eye);
-      canvas.drawCircle(head + Offset(r * .3, -r * .12), r * .08, eye);
+      canvas.drawCircle(head + Offset(-r * .3, -r * .12), r * .075, Paint()..color = dark);
+      canvas.drawCircle(head + Offset(r * .3, -r * .12), r * .075, Paint()..color = dark);
     }
 
     final mouth = Path();
-    if (smile) {
-      mouth.moveTo(head.dx - r * .38, head.dy + r * .2);
-      mouth.quadraticBezierTo(
-        head.dx,
-        head.dy + r * .55,
-        head.dx + r * .38,
-        head.dy + r * .2,
-      );
-    } else if (worried) {
+    if (expression == 'happy') {
+      mouth.moveTo(head.dx - r * .42, head.dy + r * .16);
+      mouth.quadraticBezierTo(head.dx, head.dy + r * .62, head.dx + r * .42, head.dy + r * .16);
+    } else if (expression == 'worried') {
       mouth.moveTo(head.dx - r * .35, head.dy + r * .38);
-      mouth.quadraticBezierTo(
-        head.dx,
-        head.dy + r * .08,
-        head.dx + r * .35,
-        head.dy + r * .38,
+      mouth.quadraticBezierTo(head.dx, head.dy + r * .05, head.dx + r * .35, head.dy + r * .38);
+      canvas.drawLine(
+        head + Offset(-r * .48, -r * .43),
+        head + Offset(-r * .12, -r * .29),
+        _stroke(dark, r * .09),
+      );
+      canvas.drawLine(
+        head + Offset(r * .12, -r * .29),
+        head + Offset(r * .48, -r * .43),
+        _stroke(dark, r * .09),
       );
     } else {
-      mouth.moveTo(head.dx - r * .3, head.dy + r * .26);
-      mouth.lineTo(head.dx + r * .3, head.dy + r * .26);
+      mouth.moveTo(head.dx - r * .28, head.dy + r * .25);
+      mouth.lineTo(head.dx + r * .28, head.dy + r * .25);
     }
     canvas.drawPath(mouth, _stroke(dark, r * .1));
-
-    if (worried) {
-      canvas.drawLine(
-        head + Offset(-r * .48, -r * .42),
-        head + Offset(-r * .15, -r * .3),
-        _stroke(dark, r * .09),
-      );
-      canvas.drawLine(
-        head + Offset(r * .15, -r * .3),
-        head + Offset(r * .48, -r * .42),
-        _stroke(dark, r * .09),
-      );
-    }
   }
 
   void _drawHappy(Canvas canvas, Offset c, double s, double phase) {
-    final bob = math.sin(phase * 2) * s * .012;
-    final p = c + Offset(0, bob);
-    final head = p + Offset(s * .06, -s * .18);
-    _face(canvas, head, s * .055, smile: true);
+    _halo(canvas, c, s, green);
+    final jump = math.sin(phase).abs() * s * .025;
+    final p = c - Offset(0, jump);
+    final head = p + Offset(0, -s * .19);
+    _face(canvas, head, s * .06, expression: 'happy');
 
-    final body = _stroke(shirt, s * .055);
-    final limb = _stroke(dark, s * .04);
-    final shoulder = p + Offset(s * .015, -s * .105);
-    final hip = p + Offset(-s * .015, s * .01);
-    canvas.drawLine(shoulder, hip, body);
+    final torsoTop = p + Offset(0, -s * .11);
+    final hip = p + Offset(0, s * .015);
+    canvas.drawLine(torsoTop, hip, _stroke(green, s * .062));
 
-    final swing = math.sin(phase) * s * .04;
+    // Deliberately celebratory: both arms high in a wide V.
     canvas.drawLine(
-      shoulder,
-      p + Offset(-s * .10 - swing, -s * .015),
-      limb,
+      torsoTop + Offset(-s * .01, s * .01),
+      p + Offset(-s * .15, -s * .20),
+      _stroke(dark, s * .038),
     );
     canvas.drawLine(
-      shoulder,
-      p + Offset(s * .115 + swing, -s * .03),
-      limb,
+      torsoTop + Offset(s * .01, s * .01),
+      p + Offset(s * .15, -s * .20),
+      _stroke(dark, s * .038),
+    );
+
+    // Legs spread slightly like a small victory jump.
+    canvas.drawLine(
+      hip,
+      p + Offset(-s * .095, s * .15),
+      _stroke(dark, s * .04),
     );
     canvas.drawLine(
       hip,
-      p + Offset(-s * .11 - swing * .7, s * .145),
-      limb,
-    );
-    canvas.drawLine(
-      hip,
-      p + Offset(s * .12 + swing * .7, s * .11),
-      limb,
+      p + Offset(s * .095, s * .15),
+      _stroke(dark, s * .04),
     );
 
-    canvas.drawCircle(
-      p + Offset(-s * .23, -s * .18),
-      s * .018,
-      Paint()..color = const Color(0xFF31B77B),
-    );
-    canvas.drawCircle(
-      p + Offset(-s * .27, -s * .11),
-      s * .011,
-      Paint()..color = const Color(0xFF31B77B),
-    );
+    // Confetti / achievement sparkles.
+    for (final item in <(double,double,Color)>[
+      (-.24,-.19,Color(0xFFF2B700)),
+      (.24,-.16,Color(0xFF31B77B)),
+      (-.20,-.04,Color(0xFF62A6F3)),
+      (.22,.00,Color(0xFFF06C6C)),
+    ]) {
+      final q = p + Offset(s * item.$1, s * item.$2);
+      canvas.drawCircle(q, s * .015, Paint()..color = item.$3);
+    }
   }
 
   void _drawRecovery(Canvas canvas, Offset c, double s, double phase) {
-    final breathe = math.sin(phase) * s * .006;
-    final p = c + Offset(0, breathe);
+    _halo(canvas, c, s, blue);
+    final p = c + Offset(0, math.sin(phase) * s * .005);
     final head = p + Offset(0, -s * .18);
-    _face(canvas, head, s * .058, smile: false, closedEyes: true);
+    _face(canvas, head, s * .058, expression: 'neutral', closedEyes: true);
 
     canvas.drawLine(
-      p + Offset(0, -s * .105),
+      p + Offset(0, -s * .10),
       p + Offset(0, s * .025),
-      _stroke(shirt, s * .065),
+      _stroke(blue, s * .065),
     );
 
-    final limb = _stroke(dark, s * .038);
-    canvas.drawLine(
-      p + Offset(0, -s * .07),
-      p + Offset(-s * .12, s * .02),
-      limb,
-    );
-    canvas.drawLine(
-      p + Offset(0, -s * .07),
-      p + Offset(s * .12, s * .02),
-      limb,
-    );
+    final limb = _stroke(dark, s * .037);
+    // Hands resting on knees.
+    canvas.drawLine(p + Offset(0, -s * .07), p + Offset(-s * .13, s * .045), limb);
+    canvas.drawLine(p + Offset(0, -s * .07), p + Offset(s * .13, s * .045), limb);
 
-    final leftLeg = Path()
-      ..moveTo(p.dx - s * .015, p.dy + s * .025)
-      ..quadraticBezierTo(
-        p.dx - s * .09,
-        p.dy + s * .08,
-        p.dx - s * .17,
-        p.dy + s * .105,
-      )
-      ..quadraticBezierTo(
-        p.dx - s * .08,
-        p.dy + s * .135,
-        p.dx,
-        p.dy + s * .095,
-      );
-    canvas.drawPath(leftLeg, limb);
+    final left = Path()
+      ..moveTo(p.dx, p.dy + s * .02)
+      ..quadraticBezierTo(p.dx - s * .08, p.dy + s * .07, p.dx - s * .17, p.dy + s * .11)
+      ..quadraticBezierTo(p.dx - s * .07, p.dy + s * .14, p.dx, p.dy + s * .10);
+    final right = Path()
+      ..moveTo(p.dx, p.dy + s * .02)
+      ..quadraticBezierTo(p.dx + s * .08, p.dy + s * .07, p.dx + s * .17, p.dy + s * .11)
+      ..quadraticBezierTo(p.dx + s * .07, p.dy + s * .14, p.dx, p.dy + s * .10);
+    canvas.drawPath(left, limb);
+    canvas.drawPath(right, limb);
 
-    final rightLeg = Path()
-      ..moveTo(p.dx + s * .015, p.dy + s * .025)
-      ..quadraticBezierTo(
-        p.dx + s * .09,
-        p.dy + s * .08,
-        p.dx + s * .17,
-        p.dy + s * .105,
-      )
-      ..quadraticBezierTo(
-        p.dx + s * .08,
-        p.dy + s * .135,
-        p.dx,
-        p.dy + s * .095,
-      );
-    canvas.drawPath(rightLeg, limb);
-
+    // Calm breathing waves.
     for (var i = 0; i < 3; i++) {
-      final radius = s * (.24 + i * .045 + (t * .025));
       canvas.drawArc(
-        Rect.fromCircle(center: p, radius: radius),
+        Rect.fromCircle(center: p, radius: s * (.24 + i * .04)),
         math.pi * 1.05,
         math.pi * .9,
         false,
         Paint()
-          ..color = const Color(0xFF4AA3DF).withValues(alpha: .16 - i * .035)
+          ..color = blue.withValues(alpha: .18 - i * .04)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2,
       );
@@ -296,50 +247,83 @@ class _MoodAvatarPainter extends CustomPainter {
   }
 
   void _drawWorried(Canvas canvas, Offset c, double s, double phase) {
-    final p = c + Offset(0, math.sin(phase) * s * .004);
-    final head = p + Offset(s * .015, -s * .17);
-    _face(canvas, head, s * .058, smile: false, worried: true);
+    _halo(canvas, c, s, amber);
+    final p = c + Offset(0, s * .04);
+    final head = p + Offset(-s * .015, -s * .11);
+    _face(canvas, head, s * .061, expression: 'worried');
 
-    final torso = _stroke(const Color(0xFF63766E), s * .055);
-    final limb = _stroke(dark, s * .038);
+    // Slumped seated pose: intentionally very different from the happy state.
+    final shoulder = p + Offset(-s * .02, -s * .04);
+    final hip = p + Offset(0, s * .075);
     canvas.drawLine(
-      p + Offset(0, -s * .10),
-      p + Offset(-s * .025, s * .03),
-      torso,
+      shoulder,
+      hip,
+      _stroke(const Color(0xFF7B817E), s * .06),
+    );
+
+    // One hand holding the head, the other resting on the knee.
+    canvas.drawLine(
+      shoulder,
+      head + Offset(s * .05, -s * .01),
+      _stroke(dark, s * .038),
     );
     canvas.drawLine(
-      p + Offset(-s * .01, -s * .065),
-      p + Offset(-s * .115, s * .015),
-      limb,
+      shoulder + Offset(0, s * .015),
+      p + Offset(-s * .14, s * .10),
+      _stroke(dark, s * .038),
+    );
+
+    // Bent legs / seated posture.
+    canvas.drawLine(
+      hip,
+      p + Offset(-s * .11, s * .14),
+      _stroke(dark, s * .042),
     );
     canvas.drawLine(
-      p + Offset(s * .005, -s * .07),
-      head + Offset(s * .055, s * .04),
-      limb,
+      p + Offset(-s * .11, s * .14),
+      p + Offset(-s * .02, s * .19),
+      _stroke(dark, s * .042),
     );
     canvas.drawLine(
-      p + Offset(-s * .025, s * .03),
-      p + Offset(-s * .09, s * .15),
-      limb,
+      hip,
+      p + Offset(s * .11, s * .14),
+      _stroke(dark, s * .042),
     );
     canvas.drawLine(
-      p + Offset(-s * .025, s * .03),
-      p + Offset(s * .075, s * .145),
-      limb,
+      p + Offset(s * .11, s * .14),
+      p + Offset(s * .18, s * .18),
+      _stroke(dark, s * .042),
     );
+
+    // Sweat drop and floating question mark make the state unmistakable.
+    final sweat = Path()
+      ..moveTo(head.dx + s * .075, head.dy - s * .045)
+      ..quadraticBezierTo(
+        head.dx + s * .11,
+        head.dy,
+        head.dx + s * .075,
+        head.dy + s * .025,
+      )
+      ..quadraticBezierTo(
+        head.dx + s * .04,
+        head.dy,
+        head.dx + s * .075,
+        head.dy - s * .045,
+      );
+    canvas.drawPath(sweat, Paint()..color = const Color(0xFF62A6F3));
 
     final q = TextPainter(
       text: const TextSpan(
         text: '?',
         style: TextStyle(
-          color: Color(0xFFE59A2F),
-          fontSize: 24,
+          color: amber,
+          fontSize: 30,
           fontWeight: FontWeight.w900,
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    q.paint(canvas, p + Offset(s * .17, -s * .20));
+    q.paint(canvas, p + Offset(s * .18, -s * .20 + math.sin(phase) * 2));
   }
 
   @override
