@@ -67,6 +67,18 @@ class HomeScreen extends StatelessWidget {
           streak: streak.currentStreak,
         ),
         const SizedBox(height: 12),
+        _HomeLogActions(
+          restDay: isRestDay,
+          hasWorkout: todayWorkouts.isNotEmpty,
+          onWorkout: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => StrengthWorkoutScreen(store: store)),
+          ),
+          onRest: () async {
+            await store.markRestDay(today);
+          },
+        ),
+        const SizedBox(height: 12),
         _StreakCard(
           summary: streak,
           onTap: () => Navigator.push(
@@ -312,6 +324,63 @@ class _Hero extends StatelessWidget {
       ],
     ),
   );
+}
+
+class _HomeLogActions extends StatelessWidget {
+  final bool restDay;
+  final bool hasWorkout;
+  final VoidCallback onWorkout;
+  final VoidCallback onRest;
+
+  const _HomeLogActions({
+    required this.restDay,
+    required this.hasWorkout,
+    required this.onWorkout,
+    required this.onRest,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Log today",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              "Choose a workout or an intentional rest day.",
+              style: TextStyle(fontSize: 11, color: Color(0xFF65766F)),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: restDay ? null : onWorkout,
+                    icon: const Icon(Icons.fitness_center_rounded, size: 19),
+                    label: Text(hasWorkout ? "Log another workout" : "Log workout"),
+                  ),
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: (restDay || hasWorkout) ? null : onRest,
+                    icon: const Icon(Icons.self_improvement_rounded, size: 19),
+                    label: Text(restDay ? "Rest day logged" : "Rest day"),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _StreakCard extends StatelessWidget {
@@ -1105,7 +1174,7 @@ class RewardsScreen extends StatelessWidget {
 
 pub = ROOT/'pubspec.yaml'
 p = pub.read_text()
-p = re.sub(r'^version:\s*.*$', 'version: 0.3.1+11', p, flags=re.M)
+p = re.sub(r'^version:\s*.*$', 'version: 0.3.2+12', p, flags=re.M)
 pub.write_text(p)
 
-print('Applied v0.3.1 streak rewards, rest-day logging and dynamic avatar moods')
+print('Applied v0.3.2 home log actions and stronger dynamic avatar moods')
