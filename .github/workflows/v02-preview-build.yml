@@ -1,4 +1,4 @@
-name: MuscleTrack v0.3.2 streak preview APK
+name: MuscleTrack v0.3.3 body map preview APK
 
 on:
   workflow_dispatch:
@@ -22,6 +22,9 @@ jobs:
       - name: Apply streak rewards and avatar moods
         run: python tool/apply_rewards_v031.py
 
+      - name: Apply 3D body map logging
+        run: python tool/apply_bodymap_v033.py
+
       - name: Create Android runner
         run: |
           chmod +x tool/bootstrap_android.sh
@@ -43,6 +46,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: muscletrack-v032-streak-preview-apk
+          name: muscletrack-v033-bodymap-preview-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 30
