@@ -18,7 +18,7 @@ if 'assets/digital_twin_bodymap.webp' not in p:
         '  uses-material-design: true',
         '  uses-material-design: true\n  assets:\n    - assets/digital_twin_bodymap.webp'
     )
-p = re.sub(r'^version:\s*.*$', 'version: 0.3.3+13', p, flags=re.M)
+p = re.sub(r'^version:\s*.*$', 'version: 0.3.5+15', p, flags=re.M)
 pub.write_text(p)
 
 # Add body-part tags to WorkoutSession.
@@ -377,6 +377,10 @@ if "_selectedBodyParts" not in w:
         "      source: sets.isEmpty && _selectedBodyParts.isNotEmpty ? '3D body map' : _source,",
     )
     w = w.replace(
+        "                    DropdownMenuItem(\n                        value: 'Other device', child: Text('Other device')),",
+        "                    DropdownMenuItem(\n                        value: 'Other device', child: Text('Other device')),\n                    DropdownMenuItem(\n                        value: '3D body map',\n                        enabled: false,\n                        child: Text('3D body map')),",
+    )
+    w = w.replace(
         "      notes: _notes.text.trim(),\n      sets: sets,",
         "      notes: _notes.text.trim(),\n      bodyParts: _selectedBodyParts.toList()..sort(),\n      sets: sets,",
     )
@@ -510,4 +514,4 @@ if "body_progress_screen.dart" not in h:
     h = h.replace(marker, insertion + marker)
 home.write_text(h)
 
-print('Applied v0.3.3 interactive body-map workout logging test')
+print('Applied v0.3.5 body-map logging with safe 3D source dropdown')
