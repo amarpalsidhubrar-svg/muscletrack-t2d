@@ -1,4 +1,4 @@
-name: MuscleTrack v0.3.4 rotatable body map preview APK
+name: MuscleTrack v0.3.5 body map bugfix preview APK
 
 on:
   workflow_dispatch:
@@ -49,6 +49,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: muscletrack-v034-rotatable-bodymap-preview-apk
+          name: muscletrack-v035-bodymap-bugfix-preview-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 30
