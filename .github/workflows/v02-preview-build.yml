@@ -1,4 +1,4 @@
-name: MuscleTrack v0.3.3 body map preview APK
+name: MuscleTrack v0.3.4 rotatable body map preview APK
 
 on:
   workflow_dispatch:
@@ -25,6 +25,9 @@ jobs:
       - name: Apply 3D body map logging
         run: python tool/apply_bodymap_v033.py
 
+      - name: Apply rotatable body map
+        run: python tool/apply_bodymap_rotation_v034.py
+
       - name: Create Android runner
         run: |
           chmod +x tool/bootstrap_android.sh
@@ -46,6 +49,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: muscletrack-v033-bodymap-preview-apk
+          name: muscletrack-v034-rotatable-bodymap-preview-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 30
