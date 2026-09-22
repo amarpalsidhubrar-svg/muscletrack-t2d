@@ -374,7 +374,7 @@ if "_selectedBodyParts" not in w:
     )
     w = w.replace(
         "      source: _source,",
-        "      source: sets.isEmpty && _selectedBodyParts.isNotEmpty ? '3D body map' : _source,",
+        "      source: sets.isEmpty && _selectedBodyParts.isNotEmpty ? '3D body map' : (_source == '3D body map' ? 'Manual entry' : _source),",
     )
     w = w.replace(
         "                    DropdownMenuItem(\n                        value: 'Other device', child: Text('Other device')),",
