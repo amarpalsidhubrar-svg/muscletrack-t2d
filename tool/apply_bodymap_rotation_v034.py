@@ -494,7 +494,7 @@ class _PosteriorTwinPainter extends CustomPainter {
 
 pub = ROOT/'pubspec.yaml'
 p = pub.read_text()
-p = re.sub(r'^version:\s*.*$', 'version: 0.3.4+14', p, flags=re.M)
+p = re.sub(r'^version:\s*.*$', 'version: 0.3.5+15', p, flags=re.M)
 pub.write_text(p)
 
-print('Applied v0.3.4 swipe rotation with posterior digital-twin muscle map')
+print('Applied v0.3.5 swipe rotation with posterior digital-twin muscle map')
