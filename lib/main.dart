@@ -40,7 +40,7 @@ class _MuscleTrackAppState extends State<MuscleTrackApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'MuscleTrack T2D',
+      title: 'MuscleTrack',
       theme: buildAppTheme(),
       home: widget.store.loading
           ? const Scaffold(body: Center(child: CircularProgressIndicator()))

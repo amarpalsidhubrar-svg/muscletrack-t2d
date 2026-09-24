@@ -25,6 +25,11 @@ while IFS= read -r -d '' file; do
   sed -i 's/au\.com\.muscletrack\.muscletrack_t2d/au.com.muscletrack.t2d/g' "$file"
 done < <(grep -rlZ 'au\.com\.muscletrack\.muscletrack_t2d' "$ROOT/android" || true)
 
+MANIFEST="$ROOT/android/app/src/main/AndroidManifest.xml"
+if [[ -f "$MANIFEST" ]]; then
+  sed -i 's/android:label="muscletrack_t2d"/android:label="MuscleTrack"/' "$MANIFEST"
+fi
+
 # Target Android 16 / API 36 for Google Play submissions from 31 Aug 2026.
 APP_GRADLE="$ROOT/android/app/build.gradle.kts"
 if [[ -f "$APP_GRADLE" ]]; then

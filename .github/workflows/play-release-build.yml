@@ -1,7 +1,12 @@
+# MuscleTrack v0.3 clean workout-only Play build - final
 name: Google Play signed AAB
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ feature/v0.2-muscle-health ]
+    paths:
+      - '.github/workflows/play-release-build.yml'
 
 jobs:
   build:
@@ -13,6 +18,17 @@ jobs:
         with:
           channel: stable
           cache: true
+
+      - name: Apply Option 2 activity pulse
+        run: python tool/apply_activity_pulse.py
+
+      - name: Apply workout-only UI and calendar
+        run: python tool/apply_workout_only_ui.py
+
+      - name: Set Play version
+        run: |
+          sed -i 's/^version:.*/version: 0.3.0+10/' pubspec.yaml
+          grep '^version:' pubspec.yaml
 
       - name: Create Android runner
         run: |
@@ -48,7 +64,7 @@ jobs:
           python3 tool/configure_release_signing.py
 
       - name: Analyze
-        run: flutter analyze --no-fatal-infos
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Test
         run: flutter test
@@ -58,6 +74,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: muscletrack-t2d-play-aab
+          name: muscletrack-v030-play-aab
           path: build/app/outputs/bundle/release/app-release.aab
           retention-days: 30

@@ -1,11 +1,9 @@
-name: Android test build
+name: MuscleTrack v0.3.7 reference night mode preview APK
 
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches: [ feature/v0.2-muscle-health ]
 
 jobs:
   build:
@@ -24,6 +22,18 @@ jobs:
       - name: Apply streak rewards and avatar moods
         run: python tool/apply_rewards_v031.py
 
+      - name: Apply 3D body map logging
+        run: python tool/apply_bodymap_v033.py
+
+      - name: Apply rotatable body map
+        run: python tool/apply_bodymap_rotation_v034.py
+
+      - name: Apply v0.3.6 dark timer and activity
+        run: python tool/apply_v036_features.py
+
+      - name: Apply reference night mode
+        run: python tool/apply_night_reference_v037.py
+
       - name: Create Android runner
         run: |
           chmod +x tool/bootstrap_android.sh
@@ -40,10 +50,11 @@ jobs:
       - name: Test
         run: flutter test
 
-      - name: Build debug APK
+      - name: Build preview APK
         run: flutter build apk --debug
 
       - uses: actions/upload-artifact@v4
         with:
-          name: muscletrack-v031-streak-debug-apk
+          name: muscletrack-v037-reference-night-preview-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 30

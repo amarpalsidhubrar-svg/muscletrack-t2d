@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'app_database.dart';
 import 'calculations.dart';
 import 'models.dart';
+import 'streaks.dart';
 
 class AppStore extends ChangeNotifier {
   final AppDatabase db;
@@ -11,19 +12,13 @@ class AppStore extends ChangeNotifier {
 
   bool loading = true;
   UserProfile? profile;
-  List<WeightEntry> weights = [];
-  List<MedicationEntry> medications = [];
   List<WorkoutSession> workouts = [];
-  Goals goals = const Goals();
 
   Future<void> load() async {
     loading = true;
     notifyListeners();
     profile = await db.loadProfile();
-    weights = await db.loadWeights();
-    medications = await db.loadMedications();
     workouts = await db.loadWorkouts();
-    goals = await db.loadGoals();
     loading = false;
     notifyListeners();
   }
@@ -31,21 +26,6 @@ class AppStore extends ChangeNotifier {
   Future<void> saveProfile(UserProfile value) async {
     profile = value;
     await db.saveProfile(value);
-    if (weights.isEmpty) {
-      await db.addWeight(
-        WeightEntry(date: DateTime.now(), weightKg: value.baselineWeightKg),
-      );
-    }
-    await refresh();
-  }
-
-  Future<void> addWeight(WeightEntry value) async {
-    await db.addWeight(value);
-    await refresh();
-  }
-
-  Future<void> addMedication(MedicationEntry value) async {
-    await db.addMedication(value);
     await refresh();
   }
 
@@ -54,17 +34,19 @@ class AppStore extends ChangeNotifier {
     await refresh();
   }
 
-  Future<void> saveGoals(Goals value) async {
-    goals = value;
-    await db.saveGoals(value);
-    notifyListeners();
+  Future<void> updateWorkout(WorkoutSession value) async {
+    await db.updateWorkout(value);
+    await refresh();
+  }
+
+  Future<void> deleteWorkout(int workoutId) async {
+    await db.deleteWorkout(workoutId);
+    await refresh();
   }
 
   Future<void> refresh() async {
-    weights = await db.loadWeights();
-    medications = await db.loadMedications();
+    profile = await db.loadProfile();
     workouts = await db.loadWorkouts();
-    goals = await db.loadGoals();
     notifyListeners();
   }
 
@@ -73,45 +55,17 @@ class AppStore extends ChangeNotifier {
     await load();
   }
 
-  double get currentWeightKg =>
-      weights.isNotEmpty ? weights.first.weightKg : (profile?.baselineWeightKg ?? 0);
-
-  double get currentBmi => profile == null ? 0 : bmi(currentWeightKg, profile!.heightCm);
-
-  double get weightChangePct => profile == null
-      ? 0
-      : percentWeightChange(profile!.baselineWeightKg, currentWeightKg);
-
   DateTime get startOfCurrentWeek {
     final now = DateTime.now();
     final day = DateTime(now.year, now.month, now.day);
     return day.subtract(Duration(days: day.weekday - 1));
   }
 
-  List<WorkoutSession> get thisWeekWorkouts => workouts
-      .where((w) => !w.date.isBefore(startOfCurrentWeek))
-      .toList();
+  List<WorkoutSession> get thisWeekWorkouts =>
+      workouts.where((w) => !w.date.isBefore(startOfCurrentWeek)).toList();
 
   int get weeklyActivityMinutes =>
       thisWeekWorkouts.fold<int>(0, (sum, w) => sum + w.durationMin);
-
-  int get weeklyStrengthSessions => thisWeekWorkouts
-      .where((w) => w.workoutType == 'Strength')
-      .length;
-
-  double get weeklyMetMinutes => thisWeekWorkouts.fold<double>(
-        0,
-        (sum, w) => sum + metMinutes(w.met, w.durationMin),
-      );
-
-  double get weeklyCalories => thisWeekWorkouts.fold<double>(0, (sum, w) {
-        if (w.deviceCalories != null) return sum + w.deviceCalories!;
-        return sum + estimatedCalories(
-          met: w.met,
-          minutes: w.durationMin,
-          bodyWeightKg: currentWeightKg,
-        );
-      });
 
   StrengthBest? get latestStrengthBest {
     StrengthBest? best;
@@ -134,11 +88,53 @@ class AppStore extends ChangeNotifier {
     double? best;
     for (final workout in workouts) {
       for (final set in workout.sets) {
-        if (set.exerciseName.toLowerCase() != exerciseName.toLowerCase()) continue;
+        if (set.exerciseName.toLowerCase() != exerciseName.toLowerCase()) {
+          continue;
+        }
         final value = epleyE1rm(set.weightKg, set.reps);
         if (best == null || value > best) best = value;
       }
     }
     return best;
   }
+  StreakSummary get streakSummary => calculateStreak(workouts);
+
+  DailyLogKind? logKindFor(DateTime value) =>
+      dailyLogMap(workouts)[dayOnly(value)];
+
+  List<WorkoutSession> workoutsForDay(DateTime value) {
+    final target = dayOnly(value);
+    return workouts.where((w) => dayOnly(w.date) == target).toList();
+  }
+
+  bool hasWorkoutOn(DateTime value) =>
+      workoutsForDay(value).any((w) => w.workoutType.toLowerCase() != 'rest day');
+
+  bool hasRestDayOn(DateTime value) =>
+      workoutsForDay(value).any((w) => w.workoutType.toLowerCase() == 'rest day');
+
+  Future<void> markRestDay(DateTime value) async {
+    if (hasWorkoutOn(value) || hasRestDayOn(value)) return;
+    await addWorkout(
+      WorkoutSession(
+        date: dayOnly(value),
+        workoutType: 'Rest Day',
+        durationMin: 0,
+        source: 'Rest Day',
+        notes: 'Recovery day',
+      ),
+    );
+  }
+
+  Future<void> removeRestDay(DateTime value) async {
+    final rests = workoutsForDay(value)
+        .where((w) => w.workoutType.toLowerCase() == 'rest day' && w.id != null)
+        .toList();
+    for (final rest in rests) {
+      await db.deleteWorkout(rest.id!);
+    }
+    await refresh();
+  }
+
+
 }
