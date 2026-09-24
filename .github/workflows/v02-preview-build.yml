@@ -1,4 +1,4 @@
-name: MuscleTrack v0.3.6 dark timer activity preview APK
+name: MuscleTrack v0.3.7 reference night mode preview APK
 
 on:
   workflow_dispatch:
@@ -31,6 +31,9 @@ jobs:
       - name: Apply v0.3.6 dark timer and activity
         run: python tool/apply_v036_features.py
 
+      - name: Apply reference night mode
+        run: python tool/apply_night_reference_v037.py
+
       - name: Create Android runner
         run: |
           chmod +x tool/bootstrap_android.sh
@@ -52,6 +55,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: muscletrack-v036-dark-timer-activity-preview-apk
+          name: muscletrack-v037-reference-night-preview-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 30
