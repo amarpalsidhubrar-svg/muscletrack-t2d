@@ -1,4 +1,4 @@
-name: MuscleTrack v0.3.5 body map bugfix preview APK
+name: MuscleTrack v0.3.6 dark timer activity preview APK
 
 on:
   workflow_dispatch:
@@ -28,6 +28,9 @@ jobs:
       - name: Apply rotatable body map
         run: python tool/apply_bodymap_rotation_v034.py
 
+      - name: Apply v0.3.6 dark timer and activity
+        run: python tool/apply_v036_features.py
+
       - name: Create Android runner
         run: |
           chmod +x tool/bootstrap_android.sh
@@ -49,6 +52,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: muscletrack-v035-bodymap-bugfix-preview-apk
+          name: muscletrack-v036-dark-timer-activity-preview-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 30
