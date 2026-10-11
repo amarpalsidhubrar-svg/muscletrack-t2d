@@ -1,4 +1,4 @@
-name: MuscleTrack v0.3.8 blue night mode preview APK
+name: MuscleTrack v0.3.9 daily reminder preview APK
 
 on:
   workflow_dispatch:
@@ -34,6 +34,9 @@ jobs:
       - name: Apply v0.3.8 blue night mode
         run: python tool/apply_night_blue_v038.py
 
+      - name: Apply v0.3.9 daily reminder
+        run: python tool/apply_daily_reminder_v039.py
+
       - name: Create Android runner
         run: |
           chmod +x tool/bootstrap_android.sh
@@ -43,6 +46,9 @@ jobs:
         run: |
           chmod +x tool/configure_preview_android.sh
           ./tool/configure_preview_android.sh
+
+      - name: Configure reminder notifications
+        run: python tool/configure_reminder_android.py
 
       - name: Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
@@ -55,6 +61,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: muscletrack-v038-blue-night-preview-apk
+          name: muscletrack-v039-daily-reminder-preview-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 30
